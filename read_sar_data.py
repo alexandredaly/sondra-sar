@@ -123,7 +123,7 @@ class Uavsar_slc_stack_1x1():
         """
         if crop is not None:
         
-            img = np.abs(self.data[crop[0]:crop[1], crop[2]:crop[3]])
+            img = np.log10(np.abs(self.data[crop[0]:crop[1], crop[2]:crop[3]]))
             
         else:
             
