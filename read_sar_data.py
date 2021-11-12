@@ -61,18 +61,20 @@ class Uavsar_slc_stack_1x1():
         
         # Iterate on those files to search for an annotation file
         for entry in listOfFiles:  
+        
             if fnmatch.fnmatch(entry, "*.ann"):
 
-                # Read the ann file to obtain metadata
-                self.meta_data[entry.split('.')[0]] = {} # initialise dict for the currect file
-                with open(self.path + entry, 'r') as f:
-                    for line in f: # Iterate on each line
-                        # Discard commented lines
-                        line = line.strip().split(';')[0]
-                        if not (line == ''):
-                            category = ' '.join(line.split()[:line.split().index('=')-1])
-                            value = ' '.join(line.split()[line.split().index('=')+1:])
-                            self.meta_data[entry.split('.')[0]][category] = value
+                    # Read the ann file to obtain metadata
+                    self.meta_data[entry.split('.')[0]] = {} # initialise dict for the currect file
+                    with open(self.path + entry, 'r') as f:
+                        for line in f: # Iterate on each line
+                            # Discard commented lines
+                            line = line.strip().split(';')[0]
+                            if not (line == ''):
+                                category = ' '.join(line.split()[:line.split().index('=')-1])
+                                value = ' '.join(line.split()[line.split().index('=')+1:])
+                                self.meta_data[entry.split('.')[0]][category] = value
+
 
         # Read slc file corresponding to the segment of interest and crop it
 
@@ -84,11 +86,12 @@ class Uavsar_slc_stack_1x1():
                                       '_'.join(entry.split('_')[-2:]) + '_sSEGMENT'
             if unique_identifiers_time not in self.unique_identifiers_time_list:
                 self.unique_identifiers_time_list.append(unique_identifiers_time)
-
+            
         # Then we read the files one by one for each polarisation and time
         if crop is not None:
             self.data = np.zeros((crop[1]-crop[0], crop[3]-crop[2], len(polarisation), 
                         len(self.unique_identifiers_time_list)), dtype='complex64')
+            
             for t, entry_time in enumerate(self.unique_identifiers_time_list):
                 for i_pol, pol in enumerate(polarisation):
                     # Read slc file at the given crop indexes
@@ -126,12 +129,10 @@ class Uavsar_slc_stack_1x1():
         if crop is not None:
         
             img = np.log10(np.abs(data[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
-            aspect_ratio =  (crop[3]-crop[2])/(crop[1]-crop[0])
             
         else:
             
             img = np.log10(np.abs(data) + 1e-8)
-            aspect_ratio = 1/5
         
         img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
             
@@ -148,7 +149,7 @@ class Uavsar_slc_stack_1x1():
         
         fig = plt.figure(figsize=(8, 8))
         image = img_as_float(img_rescale)
-        plt.imshow(image, cmap=plt.cm.gray, aspect = aspect_ratio)
+        plt.imshow(image, cmap=plt.cm.gray, aspect = img.shape[1]/img.shape[0])
         plt.show()
 
     def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256):
