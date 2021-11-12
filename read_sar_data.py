@@ -172,5 +172,5 @@ class Uavsar_slc_stack_1x1():
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_data(polarisation=['HH'])
-sardata.plot_mlpls_img()
+sardata.plot_mlpls_img(crop=[20000,30000,2000,8000])
 
