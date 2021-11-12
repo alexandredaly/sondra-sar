@@ -32,7 +32,7 @@ from skimage import exposure
 from matplotlib.colors import Normalize
 
 matplotlib.rcParams['font.size'] = 8
-path = r"/home/cfren/Documents/CEI_SONDRA/2021-2022/data/test/"
+path = r"/home/cfren/CEI_SONDRA/2021-2022/data/SSurge_15305_01/"
 
 os.chdir(path)
 
@@ -114,20 +114,24 @@ class Uavsar_slc_stack_1x1():
                         self.data = temp_array
                     else:
                         self.data = np.stack( (self.data, temp_array) )
-    def plot_equalized_img(self, method,  crop=None, bins = 256):
+                        
+    def plot_equalized_img(self, data, method="equal", crop=None, bins = 256):
         """ A method to plot single UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
                 * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
                     
         """
+        
         if crop is not None:
         
-            img = np.log10(np.abs(self.data[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+            img = np.log10(np.abs(data[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+            aspect_ratio =  (crop[3]-crop[2])/(crop[1]-crop[0])
             
         else:
             
-            img = np.log10(np.abs(self.data) + 1e-8)
+            img = np.log10(np.abs(data) + 1e-8)
+            aspect_ratio = 1/5
         
         img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
             
@@ -142,15 +146,30 @@ class Uavsar_slc_stack_1x1():
         else:
             raise NameError("wrong 'method' or not defined")
         
-        fig = plt.figure(figsize=(8, 5))
+        fig = plt.figure(figsize=(8, 8))
         image = img_as_float(img_rescale)
-        plt.imshow(image, cmap=plt.cm.gray)
+        plt.imshow(image, cmap=plt.cm.gray, aspect = aspect_ratio)
         plt.show()
 
+    def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256):
+        """ A method to plot multiples UAVSAR SLC 1x1 data
+            Inputs:
+                * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
+                * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html"""
+            
+        if all and len(self.data.shape)>2:
+            for ii in range(self.data.shape[0]):
+                self.plot_equalized_img(self.data[ii,:,:], method, crop, bins)
+        elif len(self.data.shape)>2:
+            self.plot_equalized_img(self.data[0,:,:], method, crop, bins)
+        else:
+            self.plot_equalized_img(self.data, method, crop, bins)
+            
+                
 
 # Load an example image
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_data(polarisation=['HH'])
-sardata.plot_equalized_img(method="equal", crop=[0,10000,0,8000])
-#
+sardata.plot_mlpls_img()
+
