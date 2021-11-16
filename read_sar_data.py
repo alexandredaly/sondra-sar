@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
+# Need to install scikit-image to use the following modules
 from skimage import data, img_as_float
 from skimage import exposure
 
@@ -47,6 +48,7 @@ class Uavsar_slc_stack_1x1():
         self.meta_data = {}
         self.llh_grid = {}
         self.slc_data = {}
+        self.subband_header = {}
 
 
     def read_data(self, polarisation=['HH', 'HV', 'VV'], segment=1, crop=None, singlefile = True):
@@ -98,6 +100,13 @@ class Uavsar_slc_stack_1x1():
                     file_name = entry_time.replace('POL', pol).replace('SEGMENT', str(segment))
                     shape = (int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Rows']),
                              int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Columns']))   
+                    self.subband_header[file_name] =  {}
+                    self.subband_header[file_name]['AzCnt'] = shape[0]
+                    self.subband_header[file_name]['RgCnt'] = shape[1]
+                    self.subband_header[file_name]['AzPixelSz'] = float(self.meta_data['_'.join(file_name.split('_')[:-1])]['1x1 SLC Azimuth Pixel Spacing'])
+                    self.subband_header[file_name]['RgPixelSz'] = float(self.meta_data['_'.join(file_name.split('_')[:-1])]['1x1 SLC Range Pixel Spacing'])
+                    
+                    
                     print("Reading %s" % (self.path+file_name))
                     with open(self.path + file_name + '_1x1.slc', 'rb') as f:
                         f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
@@ -109,6 +118,14 @@ class Uavsar_slc_stack_1x1():
                 for i_pol, pol in enumerate(polarisation):
                     # Read whole slc file
                     file_name = entry_time.replace('POL', pol).replace('SEGMENT', str(segment))
+                    
+                    
+                    self.subband_header[file_name] =  {}
+                    self.subband_header[file_name]['AzCnt'] = int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Rows'])
+                    self.subband_header[file_name]['RgCnt'] = int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Columns'])
+                    self.subband_header[file_name]['AzPixelSz'] = float(self.meta_data['_'.join(file_name.split('_')[:-1])]['1x1 SLC Azimuth Pixel Spacing'])
+                    self.subband_header[file_name]['RgPixelSz'] = float(self.meta_data['_'.join(file_name.split('_')[:-1])]['1x1 SLC Range Pixel Spacing'])
+                    
                     print("Reading %s" % (self.path+file_name))
                     shape = (int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Rows']),
                              int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Columns']))               
@@ -166,11 +183,19 @@ class Uavsar_slc_stack_1x1():
         else:
             self.plot_equalized_img(self.data, method, crop, bins)
             
-                
+    
+    def subband_params(self):
+        for t, entry_time in enumerate(self.unique_identifiers_time_list):
+            for i_pol, pol in enumerate(polarisation):
+                # Read slc file at the given crop indexes
+                file_name = entry_time.replace('POL', pol).replace('SEGMENT', str(segment))
+                shape = (int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Rows']),
+                            int(self.meta_data['_'.join(file_name.split('_')[:-1])]['slc_1_1x1 Columns']))
+        
 
 # Load an example image
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_data(polarisation=['HH'])
-sardata.plot_mlpls_img(crop=[20000,30000,2000,8000])
+# sardata.plot_mlpls_img(crop=[20000,30000,2000,8000])
 
