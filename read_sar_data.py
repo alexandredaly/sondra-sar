@@ -137,7 +137,7 @@ class Uavsar_slc_stack_1x1():
                     
                     if crop is not None:
                         
-                        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype='complex64')    
+                        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)    
                         shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
     
                         with open(data_path, 'rb') as f:
@@ -148,19 +148,26 @@ class Uavsar_slc_stack_1x1():
                         
                     else:
                         
-                        temp_array = np.fromfile( data_path, dtype='complex64').reshape(shape)
+                        temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
                     
                     self.slc_data[file_name] = temp_array
                     del temp_array
                         
+    def plot_amp_img(self, cplx_image):
+        plt.figure()
+        plt.imshow(20*np.log10(np.abs(cplx_image)+1e-15), cmap=plt.cm.gray, aspect = cplx_image.shape[1]/cplx_image.shape[0])
+        plt.colorbar()
+        plt.show()
                         
-    def plot_equalized_img(self, data, method="equal", crop=None, bins = 256):
+    def plot_equalized_img(self, data_name, method="equal", crop=None, bins = 256, savefig = False):
         """ A method to plot single UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
                 * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
                     
         """
+        
+        data = self.slc_data[data_name]
         
         if crop is not None:
         
@@ -187,8 +194,12 @@ class Uavsar_slc_stack_1x1():
         image = img_as_float(img_rescale)
         plt.imshow(image, cmap=plt.cm.gray, aspect = img.shape[1]/img.shape[0])
         plt.show()
+        
+        if savefig:
+            plt.savefig(self.path + data_name[:-4]+'.png')
+        
 
-    def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256):
+    def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256, savefig=False):
         """ A method to plot multiples UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
@@ -198,14 +209,14 @@ class Uavsar_slc_stack_1x1():
         if bool(self.slc_data):
             if all:
                 for data_name in list(self.slc_data.keys()):
-                    self.plot_equalized_img(self.slc_data[data_name], method, crop, bins)
+                    self.plot_equalized_img(data_name, method, crop, bins, savefig)
             else:
-                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]], method, crop, bins)
+                self.plot_equalized_img(list(self.slc_data.keys())[0], method, crop, bins, savefig)
         else:
             raise KeyError("Empty dictionary")
             
     
-    def subband_process(self, identifier, plt_spectre = False):
+    def subband_process(self, identifier, decimation = True, wd = None, plt_spectre = False):
         """ A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain 
             Inputs:
                 *identifier -> self.slc_data.keys() to select the data
@@ -226,8 +237,8 @@ class Uavsar_slc_stack_1x1():
             RgCnt = crop[3] - crop[2]  #Update the Azimuth & Range count if crop
             AzCnt = crop[1] - crop[0]
             
-        SarRange = np.arange(-RgCnt*RgPixelSz/2, RgCnt*RgPixelSz/2, RgPixelSz) # radial axis (x axis / axis 1 in the image)
-        SarAzimuth = np.arange(-AzCnt*AzPixelSz/2, AzCnt*AzPixelSz/2, AzPixelSz) # azimuth axis (y axis /axis 0 in the image)
+        SarRange = RgPixelSz * np.arange(-RgCnt/2, RgCnt/2) # radial axis (x axis / axis 1 in the image)
+        SarAzimuth = AzPixelSz * np.arange(-AzCnt/2, AzCnt/2) # azimuth axis (y axis /axis 0 in the image)
         
         # spatial grid 
         
@@ -243,13 +254,13 @@ class Uavsar_slc_stack_1x1():
         # kudop = fdop / vavion;
         # kudopcentral = kcentral * np.sin(deport)
         
-        krange = kcentral*np.cos(deport) + np.arange(- 1/(2* RgPixelSz), 1/(2* RgPixelSz), 1/( RgPixelSz* RgCnt))
-        kazimuth = kcentral * np.sin(deport) + np.arange(- 1/(2* AzPixelSz), 1/(2* AzPixelSz), 1/( AzPixelSz* AzCnt))
+        krange = kcentral*np.cos(deport) + (1/RgPixelSz)*np.arange(- 1/2, 1/2, 1/RgCnt)
+        kazimuth = kcentral * np.sin(deport) + (1/AzPixelSz)*np.arange(- 1/2, 1/2, 1/AzCnt)
         
 
         # Add an offset in the dual space (SAR process) ~ (FFT shift)
         
-        data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype=complex) 
+        data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype= np.complex64) 
         
         spectre = np.fft.fft2(data)
         
@@ -273,87 +284,47 @@ class Uavsar_slc_stack_1x1():
         theta_centre = (theta_max + theta_min) / 2 # angule central de la bande
         
         
-        # Boolean filter 
+        # Boolean filter (Centered)
         Filter = (np.abs(frequence - f_centre) <= sigma_f/3) * (abs(theta-theta_centre) <= sigma_t/3)
-
-        hanning_window = window('hanning',spectre.shape )
-
-   
+        
         sub_spectre = Filter * spectre
         
-        hanning_window = window('hanning',sub_spectre.shape )
         
-        sub_spectre_window = hanning_window*sub_spectre
-        
-        
-        
-        plt.figure()
-        plt.imshow(20*np.log10(np.abs(sub_spectre_window)+1e-10), cmap=plt.cm.gray, aspect = Filter.shape[1]/Filter.shape[0])
-        plt.colorbar()
-        plt.show()
-    
-        
-        # sub_spectre = sub_spectre[Filter.shape[0]//4:(3*Filter.shape[0])//4, Filter.shape[1]//4:(3*Filter.shape[1])//4]
-        # 
-        # print(Filter.shape)
-        # print((3*Filter.shape[0])//4-Filter.shape[0]//4, (3*Filter.shape[1])//4-Filter.shape[1]//4)
-        # 
-        # plt.figure()
-        # plt.imshow(20*np.log10(np.abs(sub_spectre)+1e-10), cmap=plt.cm.gray, aspect = Filter.shape[1]/Filter.shape[0])
-        # plt.colorbar()
-        # plt.show()
-        # 
+        if decimation:
+            #Décimation par 2 de chaque dim, crop central
+            
+            sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
         
         
-        ImageFTheta = np.fft.ifft2(sub_spectre)
-        ImageFTheta_window =  np.fft.ifft2(sub_spectre_window)
-        
-        #del sub_spectre, RRange, AAzimuth, KKrange, KKazimuth, frequence, theta
+        if wd is not None:
+            
+            sub_spectre = window(wd, sub_spectre.shape ) * sub_spectre
         
         if  identifier in list(self.subimages.keys()):
                         
             print("Warning sub images", identifier, "will be erased by the processing" )
         
-        self.subimages[identifier] = ImageFTheta
-        
-        plt.figure()
-        Amp_spectre = 20*np.log10(np.abs(ImageFTheta))
-        
-        Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
-        Amp_spectre_rescale = exposure.equalize_hist(Amp_spectre)
-        
-        plt.imshow(Amp_spectre_rescale, cmap=plt.cm.gray, aspect = Amp_spectre_rescale.shape[1]/Amp_spectre_rescale.shape[0])
-        plt.colorbar()
-        plt.show()
-        
-        plt.figure()
-        Amp_spectre = 20*np.log10(np.abs(ImageFTheta_window))
-        
-        Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
-        Amp_spectre_rescale = exposure.equalize_hist(Amp_spectre)
-        
-        plt.imshow(Amp_spectre_rescale, cmap=plt.cm.gray, aspect = Amp_spectre_rescale.shape[1]/Amp_spectre_rescale.shape[0])
-        plt.colorbar()
-        plt.show()
-        
-  
-        if plt_spectre:
-            
-            plt.figure()
-            Amp_spectre = 20*np.log10(np.abs(spectre))
-            
-            Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
-            Amp_spectre_rescale = exposure.equalize_hist(Amp_spectre)
-            
-            plt.imshow(Amp_spectre_rescale, cmap=plt.cm.gray, aspect = Amp_spectre_rescale.shape[1]/Amp_spectre_rescale.shape[0])
-            plt.colorbar()
-            plt.show()
-            
+        self.subimages[identifier]  = np.fft.ifft2(sub_spectre)
 
+    
+    
 # Load an example image
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_meta_data(polarisation=['HH'])
 sardata.read_data(list(sardata.meta_data.keys())[1], crop = [10000,20000,0,9500])
-sardata.plot_mlpls_img()
-sardata.subband_process(list(sardata.slc_data.keys())[0])
+
+#plot originial SAR image 
+sardata.plot_mlpls_img(savefig=True)
+
+#SAR image halve downscaled in dual band with zero padding 
+sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
+sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+
+#SAR image halve downscaled in dual band
+sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True)
+sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+
+#SAR image halve downscaled in dual band with hanning smoothing
+sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
+sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
