@@ -216,10 +216,14 @@ class Uavsar_slc_stack_1x1():
             raise KeyError("Empty dictionary")
             
     
-    def subband_process(self, identifier, decimation = True, wd = None, plt_spectre = False):
+    def subband_process(self, identifier, decimation = True, wd = None):
         """ A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain 
             Inputs:
                 *identifier -> self.slc_data.keys() to select the data
+                *decimation = True to halve pixels numbers for each dimension 
+                            = False to keep the same but using zero padding method
+                *wd         = choose window to mitigate secondary lobes see help(window) for windows option
+                *
         """
         
         data = self.slc_data[identifier]
