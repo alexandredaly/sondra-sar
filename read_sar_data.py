@@ -28,12 +28,13 @@ import numpy as np
 # Need to install scikit-image to use the following modules
 from skimage import data, img_as_float
 from skimage import exposure
+from skimage.filters import window
 
 
 from matplotlib.colors import Normalize
 
 matplotlib.rcParams['font.size'] = 8
-path = r"/home/cfren/CEI_SONDRA/2021-2022/data/SanAnd_26524_04/"
+path = r"/home/cfren/CEI_SONDRA/2021-2022/data/SSurge_15305_01/"
 
 os.chdir(path)
 
@@ -90,7 +91,24 @@ class Uavsar_slc_stack_1x1():
                                 self.meta_data[entry.split('.')[0]][category] = value
                     
  
-
+    def read_subband_header(self, seg, crop, file_name, meta_identifier):
+        
+        # Read characteristics for subband processing
+        
+        self.subband_header[file_name] =  {}
+        self.subband_header[file_name]['AzPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Azimuth Pixel Spacing'])
+        self.subband_header[file_name]['RgPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Range Pixel Spacing'])
+        self.subband_header[file_name]['SquintAngle'] = float(self.meta_data[meta_identifier]['Global Average Squint Angle'])
+        self.subband_header[file_name]['cmWavelength'] = float(self.meta_data[meta_identifier]['Center Wavelength'])
+        self.subband_header[file_name]['AzCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Rows'])
+        self.subband_header[file_name]['RgCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Columns'])
+        
+        if crop is not None:
+            self.subband_header[file_name]['Crop'] = crop
+        else:
+            self.subband_header[file_name]['Crop'] = None  
+        
+    
     def read_data(self, meta_identifier, segment=[1], crop=None):
         """ A method to read UAVSAR SLC 1x1 data stack
             Inputs:
@@ -112,54 +130,29 @@ class Uavsar_slc_stack_1x1():
                     if  file_name in list(self.slc_data.keys()):
                         
                         print("Warning file", file_name, "will be erased by the new read" )
+                        
+                    self.read_subband_header(seg, crop, file_name, meta_identifier)
+                    
+                    print("Reading %s" % (data_path))
                     
                     if crop is not None:
-                
-                        # Read characteristics for subband processing
-            
-                        self.subband_header[file_name] =  {}
-                        self.subband_header[file_name]['AzPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Azimuth Pixel Spacing'])
-                        self.subband_header[file_name]['RgPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Range Pixel Spacing'])
-                        self.subband_header[file_name]['SquintAngle'] = float(self.meta_data[meta_identifier]['Global Average Squint Angle'])
-                        self.subband_header[file_name]['cmWavelength'] = float(self.meta_data[meta_identifier]['Center Wavelength'])
-                        self.subband_header[file_name]['AzCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Rows'])
-                        self.subband_header[file_name]['RgCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Columns'])
-                        self.subband_header[file_name]['Crop'] = crop
-                        
                         
                         temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype='complex64')    
                         shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
-        
-                        print("Reading %s" % (data_path))
+    
                         with open(data_path, 'rb') as f:
                             f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
                             for row in range(crop[1]-crop[0]):
                                 temp_array[row, :] = np.fromfile(f, dtype=np.complex64, count=crop[3]-crop[2])
                                 f.seek(((crop[0]+row)*shape[1]+crop[2])*8, os.SEEK_SET)
-                        self.slc_data[file_name] = temp_array
-                        del temp_array
-                
+                        
                     else:
-                                    
-                        # Read characteristics for subband processing
-            
-                        self.subband_header[file_name] =  {}
-                        self.subband_header[file_name]['AzPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Azimuth Pixel Spacing'])
-                        self.subband_header[file_name]['RgPixelSz'] = float(self.meta_data[meta_identifier]['1x1 SLC Range Pixel Spacing'])
-                        self.subband_header[file_name]['SquintAngle'] = float(self.meta_data[meta_identifier]['Global Average Squint Angle'])
-                        self.subband_header[file_name]['cmWavelength'] = float(self.meta_data[meta_identifier]['Center Wavelength'])
-                        self.subband_header[file_name]['AzCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Rows'])
-                        self.subband_header[file_name]['RgCnt'] = int(self.meta_data[meta_identifier]['slc_'+str(seg)+'_1x1 Columns'])
-
-                        shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
-                        self.subband_header[file_name]['Crop'] = [0,shape[0],0,shape[1]]     
-                                
-                        print("Reading %s" % (data_path))
+                        
                         temp_array = np.fromfile( data_path, dtype='complex64').reshape(shape)
-                        self.slc_data[file_name] = temp_array
-                        del temp_array
-                
-               
+                    
+                    self.slc_data[file_name] = temp_array
+                    del temp_array
+                        
                         
     def plot_equalized_img(self, data, method="equal", crop=None, bins = 256):
         """ A method to plot single UAVSAR SLC 1x1 data
@@ -219,7 +212,6 @@ class Uavsar_slc_stack_1x1():
         """
         
         data = self.slc_data[identifier]
-            
         RgPixelSz = self.subband_header[identifier]['RgPixelSz']
         AzPixelSz = self.subband_header[identifier]['AzPixelSz']
         RgCnt = self.subband_header[identifier]['RgCnt']
@@ -229,8 +221,13 @@ class Uavsar_slc_stack_1x1():
         
         # Spatial coordinates of the SAR image
         
-        SarRange = np.arange(-RgCnt*RgPixelSz/2, RgCnt*RgPixelSz/2, RgPixelSz)[crop[2]:crop[3]]  # radial axis (x axis / axis 1 in the image)
-        SarAzimuth = np.arange(-AzCnt*AzPixelSz/2, AzCnt*AzPixelSz/2, AzPixelSz)[crop[0]:crop[1]]  # azimuth axis (y axis /axis 0 in the image)
+        if crop is not None:
+            
+            RgCnt = crop[3] - crop[2]  #Update the Azimuth & Range count if crop
+            AzCnt = crop[1] - crop[0]
+            
+        SarRange = np.arange(-RgCnt*RgPixelSz/2, RgCnt*RgPixelSz/2, RgPixelSz) # radial axis (x axis / axis 1 in the image)
+        SarAzimuth = np.arange(-AzCnt*AzPixelSz/2, AzCnt*AzPixelSz/2, AzPixelSz) # azimuth axis (y axis /axis 0 in the image)
         
         # spatial grid 
         
@@ -239,22 +236,28 @@ class Uavsar_slc_stack_1x1():
         # krange and kazimuth spectral dual variables
         
         kcentral = 2/sardata.subband_header[identifier]["cmWavelength"]*100 # k = 2/lambda with lambda in meter
+        
+        # Angle de viser au sol
         deport = (90 - sardata.subband_header[identifier]["SquintAngle"])*np.pi/180
         
         # kudop = fdop / vavion;
         # kudopcentral = kcentral * np.sin(deport)
         
-        krange = kcentral*np.cos(deport) + np.arange(- 1/(2* RgPixelSz), 1/(2* RgPixelSz), 1/( RgPixelSz* RgCnt))[crop[2]:crop[3]]
-        kazimuth = kcentral * np.sin(deport) + np.arange(- 1/(2* AzPixelSz), 1/(2* AzPixelSz), 1/( AzPixelSz* AzCnt))[crop[0]:crop[1]] 
+        krange = kcentral*np.cos(deport) + np.arange(- 1/(2* RgPixelSz), 1/(2* RgPixelSz), 1/( RgPixelSz* RgCnt))
+        kazimuth = kcentral * np.sin(deport) + np.arange(- 1/(2* AzPixelSz), 1/(2* AzPixelSz), 1/( AzPixelSz* AzCnt))
+        
 
-        # Add an offset in the dual space (SAR process)
+        # Add an offset in the dual space (SAR process) ~ (FFT shift)
         
         data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype=complex) 
         
-        (KKrange, KKazimuth) = np.meshgrid(krange, kazimuth)
-        
-        
         spectre = np.fft.fft2(data)
+        
+        # Filtering in frequency -> sub band and Aperture -> theta
+        # fcos(theta) = krange & fsin(theta) = kazimuth 
+        
+        # Spectral grid
+        (KKrange, KKazimuth) = np.meshgrid(krange, kazimuth)
         
         frequence = np.sqrt(KKrange**2 + KKazimuth**2)
         theta = np.arctan2(KKazimuth, KKrange)
@@ -264,19 +267,48 @@ class Uavsar_slc_stack_1x1():
         theta_min = theta.min()
         theta_max = theta.max()
         
-        sigma_f = (f_max - f_min) / nbband;
-        sigma_t = (theta_max - theta_min) / nblook;
+        sigma_f = (f_max - f_min) / 2;   #demie bande frequencielle
+        sigma_t = (theta_max - theta_min) / 2; #demie bande angulaire
+        f_centre = (f_max + f_min) / 2;  # frequence centrale de la bande
+        theta_centre = (theta_max + theta_min) / 2 # angule central de la bande
         
-        theta_vec = theta_min + np.arange(0, nblook)*sigma_t + sigma_t/2;
-        f_vec = f_min + np.arange(0, nbband)*sigma_f + sigma_f /2;
         
-        ImageFTheta = np.zeros((nbband, nblook, crop[1]-crop[0], crop[3]-crop[2]), dtype=complex);
+        # Boolean filter 
+        Filter = (np.abs(frequence - f_centre) <= sigma_f/3) * (abs(theta-theta_centre) <= sigma_t/3)
+
+        hanning_window = window('hanning',spectre.shape )
+
+   
+        sub_spectre = Filter * spectre
         
-        for i_band in range(nbband):
-            for i_look in range(nblook):
-                Wavelet = (np.abs(frequence - f_vec[i_band]) <= sigma_f/2) * (abs(theta-theta_vec[i_look]) <= sigma_t/2)
-                sub_spectre = Wavelet * spectre
-                ImageFTheta[i_band, i_look,:,:] = np.fft.ifft2(sub_spectre)
+        hanning_window = window('hanning',sub_spectre.shape )
+        
+        sub_spectre_window = hanning_window*sub_spectre
+        
+        
+        
+        plt.figure()
+        plt.imshow(20*np.log10(np.abs(sub_spectre_window)+1e-10), cmap=plt.cm.gray, aspect = Filter.shape[1]/Filter.shape[0])
+        plt.colorbar()
+        plt.show()
+    
+        
+        # sub_spectre = sub_spectre[Filter.shape[0]//4:(3*Filter.shape[0])//4, Filter.shape[1]//4:(3*Filter.shape[1])//4]
+        # 
+        # print(Filter.shape)
+        # print((3*Filter.shape[0])//4-Filter.shape[0]//4, (3*Filter.shape[1])//4-Filter.shape[1]//4)
+        # 
+        # plt.figure()
+        # plt.imshow(20*np.log10(np.abs(sub_spectre)+1e-10), cmap=plt.cm.gray, aspect = Filter.shape[1]/Filter.shape[0])
+        # plt.colorbar()
+        # plt.show()
+        # 
+        
+        
+        ImageFTheta = np.fft.ifft2(sub_spectre)
+        ImageFTheta_window =  np.fft.ifft2(sub_spectre_window)
+        
+        #del sub_spectre, RRange, AAzimuth, KKrange, KKazimuth, frequence, theta
         
         if  identifier in list(self.subimages.keys()):
                         
@@ -284,10 +316,30 @@ class Uavsar_slc_stack_1x1():
         
         self.subimages[identifier] = ImageFTheta
         
+        plt.figure()
+        Amp_spectre = 20*np.log10(np.abs(ImageFTheta))
         
+        Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
+        Amp_spectre_rescale = exposure.equalize_hist(Amp_spectre)
         
+        plt.imshow(Amp_spectre_rescale, cmap=plt.cm.gray, aspect = Amp_spectre_rescale.shape[1]/Amp_spectre_rescale.shape[0])
+        plt.colorbar()
+        plt.show()
+        
+        plt.figure()
+        Amp_spectre = 20*np.log10(np.abs(ImageFTheta_window))
+        
+        Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
+        Amp_spectre_rescale = exposure.equalize_hist(Amp_spectre)
+        
+        plt.imshow(Amp_spectre_rescale, cmap=plt.cm.gray, aspect = Amp_spectre_rescale.shape[1]/Amp_spectre_rescale.shape[0])
+        plt.colorbar()
+        plt.show()
+        
+  
         if plt_spectre:
             
+            plt.figure()
             Amp_spectre = 20*np.log10(np.abs(spectre))
             
             Amp_spectre = (Amp_spectre - Amp_spectre.min())/(Amp_spectre.max() - Amp_spectre.min()) #rescale between 0 and 1
@@ -297,16 +349,11 @@ class Uavsar_slc_stack_1x1():
             plt.colorbar()
             plt.show()
             
-            
-        
-        
-
-        
 
 # Load an example image
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_meta_data(polarisation=['HH'])
-sardata.read_data(list(sardata.meta_data.keys())[1], crop=[0,5000,0,2000])
-#sardata.plot_mlpls_img()
-sardata.subband_process(list(sardata.slc_data.keys())[0], plt_spectre= False)
+sardata.read_data(list(sardata.meta_data.keys())[1], crop = [10000,20000,0,9500])
+sardata.plot_mlpls_img()
+sardata.subband_process(list(sardata.slc_data.keys())[0])
