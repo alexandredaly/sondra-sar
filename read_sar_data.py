@@ -159,7 +159,7 @@ class Uavsar_slc_stack_1x1():
         plt.colorbar()
         plt.show()
                         
-    def plot_equalized_img(self, data_name, method="equal", crop=None, bins = 256, savefig = False):
+    def plot_equalized_img(self, data, method="equal", crop=None, bins = 256, savefig = False):
         """ A method to plot single UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
@@ -167,7 +167,6 @@ class Uavsar_slc_stack_1x1():
                     
         """
         
-        data = self.slc_data[data_name]
         
         if crop is not None:
         
@@ -209,9 +208,10 @@ class Uavsar_slc_stack_1x1():
         if bool(self.slc_data):
             if all:
                 for data_name in list(self.slc_data.keys()):
-                    self.plot_equalized_img(data_name, method, crop, bins, savefig)
+                    data = self.slc_data[data_name]
+                    self.plot_equalized_img(data, method, crop, bins, savefig)
             else:
-                self.plot_equalized_img(list(self.slc_data.keys())[0], method, crop, bins, savefig)
+                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]], method, crop, bins, savefig)
         else:
             raise KeyError("Empty dictionary")
             
@@ -293,8 +293,8 @@ class Uavsar_slc_stack_1x1():
         
         sub_spectre = Filter * spectre
         
-        # # Checking spetral information
-        
+        # # # Checking spetral information
+        # 
         # self.plot_amp_img(spectre)
         # self.plot_amp_img(sub_spectre)
         
@@ -303,6 +303,7 @@ class Uavsar_slc_stack_1x1():
             #Décimation par 2 de chaque dim, crop central
             
             sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
+            # self.plot_amp_img(sub_spectre)
         
         
         if wd is not None:
@@ -321,19 +322,19 @@ class Uavsar_slc_stack_1x1():
 
 sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_meta_data(polarisation=['HH'])
-sardata.read_data(list(sardata.meta_data.keys())[1], crop = [10000,20000,0,9500])
+sardata.read_data(list(sardata.meta_data.keys())[1], crop = [15300,16800,3700,5500])
 
-# #plot originial SAR image 
-# sardata.plot_mlpls_img(savefig=True)
-# 
-# #SAR image halve downscaled in dual band with zero padding 
-# sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
-# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+#plot originial SAR image 
+sardata.plot_mlpls_img(savefig=False)
+
+#SAR image halve downscaled in dual band with zero padding 
+sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
+sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
 # 
 # #SAR image halve downscaled in dual band
 sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True)
-# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
 # 
 # #SAR image halve downscaled in dual band with hanning smoothing
-# sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
-# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
+sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
