@@ -293,6 +293,11 @@ class Uavsar_slc_stack_1x1():
         
         sub_spectre = Filter * spectre
         
+        # # Checking spetral information
+        
+        # self.plot_amp_img(spectre)
+        # self.plot_amp_img(sub_spectre)
+        
         
         if decimation:
             #Décimation par 2 de chaque dim, crop central
@@ -318,17 +323,17 @@ sardata = Uavsar_slc_stack_1x1(path)
 sardata.read_meta_data(polarisation=['HH'])
 sardata.read_data(list(sardata.meta_data.keys())[1], crop = [10000,20000,0,9500])
 
-#plot originial SAR image 
-sardata.plot_mlpls_img(savefig=True)
-
-#SAR image halve downscaled in dual band with zero padding 
-sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
-sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
-
-#SAR image halve downscaled in dual band
+# #plot originial SAR image 
+# sardata.plot_mlpls_img(savefig=True)
+# 
+# #SAR image halve downscaled in dual band with zero padding 
+# sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
+# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+# 
+# #SAR image halve downscaled in dual band
 sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True)
-sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
-
-#SAR image halve downscaled in dual band with hanning smoothing
-sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
-sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
+# 
+# #SAR image halve downscaled in dual band with hanning smoothing
+# sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
+# sardata.plot_equalized_img(list(sardata.subimages.keys())[0])
