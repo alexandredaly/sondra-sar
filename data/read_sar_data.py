@@ -34,7 +34,7 @@ from skimage.filters import window
 from matplotlib.colors import Normalize
 
 matplotlib.rcParams['font.size'] = 8
-path = r"/home/cfren/CEI_SONDRA/2021-2022/data/SSurge_15305_01/"
+path = os.path.join(os.path.abspath(os.getcwd()), 'data_files', 'labels')
 
 os.chdir(path)
 
