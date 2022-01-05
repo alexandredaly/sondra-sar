@@ -23,7 +23,6 @@ import numpy as np
 import os, fnmatch
 import matplotlib.pyplot as plt 
 import matplotlib
-import numpy as np
 
 # Need to install scikit-image to use the following modules
 from skimage import data, img_as_float
@@ -45,6 +44,7 @@ class Uavsar_slc_stack_1x1():
         self.slc_data = {}       # SAR images
         self.subband_header = {} # Characteristics for subband processing
         self.subimages = {}
+        self.count = 0 
         
     
     def read_meta_data(self, polarisation=['HH', 'HV', 'VV']):
@@ -118,6 +118,8 @@ class Uavsar_slc_stack_1x1():
                 file_name = meta_identifier + '_s'+ str(seg)+ '_1x1.slc'
                 data_path = os.path.join(self.path,file_name)
                 print(data_path)
+
+                
                 if os.path.isfile(data_path):
                     
                     if  file_name in list(self.slc_data.keys()):
@@ -127,12 +129,13 @@ class Uavsar_slc_stack_1x1():
                     self.read_subband_header(seg, crop, file_name, meta_identifier)
                     
                     print("Reading %s" % (data_path))
-                    shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
 
+                    shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
+    
                     if crop is not None:
                         
                         temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)    
-                        print(shape,"shape")
+                        
                         with open(data_path, 'rb') as f:
                             f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
                             for row in range(crop[1]-crop[0]):
@@ -141,10 +144,12 @@ class Uavsar_slc_stack_1x1():
                         
                     else:
                         
-                        temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)                
+                        temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
+                        print(temp_array.shape)
+
                     self.slc_data[file_name] = temp_array
-                    print(self.slc_data, 'slc')
                     del temp_array
+
                         
     def plot_amp_img(self, cplx_image):
         plt.figure()
@@ -152,7 +157,7 @@ class Uavsar_slc_stack_1x1():
         plt.colorbar()
         plt.show()
                         
-    def plot_equalized_img(self, data, method="equal", crop=None, bins = 256, savefig = False):
+    def plot_equalized_img(self, data, name, method="equal", crop=None, bins = 256, savefig = False):
         """ A method to plot single UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
@@ -185,10 +190,14 @@ class Uavsar_slc_stack_1x1():
         fig = plt.figure(figsize=(8, 8))
         image = img_as_float(img_rescale)
         plt.imshow(image, cmap=plt.cm.gray, aspect = img.shape[1]/img.shape[0])
+        plt.title(name)
+        plt.axis('equal')
+        if savefig:
+            plt.savefig(self.path + "stuff" +'.png')
+
         plt.show()
         
-        if savefig:
-            plt.savefig(self.path + data_name[:-4]+'.png')
+        
         
 
     def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256, savefig=False):
@@ -206,7 +215,7 @@ class Uavsar_slc_stack_1x1():
                     print(self.slc_data[data_name])
                     self.plot_equalized_img(data, method, crop, bins, savefig)
             else:
-                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]], method, crop, bins, savefig)
+                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]],"Original image", method, crop, bins, savefig)
         else:
             raise KeyError("Empty dictionary")
             
@@ -299,7 +308,7 @@ class Uavsar_slc_stack_1x1():
             
             sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
             # self.plot_amp_img(sub_spectre)
-        
+
         
         if wd is not None:
             
@@ -311,3 +320,6 @@ class Uavsar_slc_stack_1x1():
         
         self.subimages[identifier]  = np.fft.ifft2(sub_spectre)
         print(len(self.subimages.items()))
+
+
+
