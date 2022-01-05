@@ -2,3 +2,4 @@ numpy
 scikit-image
 torch > 1.6
 tensorboard
+matplotlib
