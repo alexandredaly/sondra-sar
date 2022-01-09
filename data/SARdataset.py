@@ -3,9 +3,7 @@ import numpy as np
 
 import torch
 from torch.utils.data import Dataset
-
-from data_reader import Uavsar_slc_stack_1x1
-
+from skimage import exposure
 
 class SARdataset(Dataset):
     """Store the SAR data into a torch dataset like object. 
@@ -14,7 +12,7 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object 
     """
 
-    def __init__(self, root, image_type ='HH', preprocessing = None):
+    def __init__(self, root):
         """
         Args:
             root (str): absolute path of the data files 
@@ -23,40 +21,61 @@ class SARdataset(Dataset):
         """
 
         self.root = root
-        self.files_names = [f for f in os.listdir(self.root) if 
-                            os.path.isfile(os.path.join(self.root, f)) and f.endswith(".slc")]
-        self.preprocessing = preprocessing
-        self.data_reader = Uavsar_slc_stack_1x1(self.root)
-        sardata.read_meta_data(polarisation=[image_type])
-        sardata.read_data(list(sardata.meta_data.keys())[0] crop = [200, 800, 200, 800])
+        self.files_names = [f for f in os.listdir(os.path.join(self.root,'target')) if 
+                            os.path.isfile(os.path.join(self.root,'target', f))]
+        print(self.files_names)
 
 
     def __getitem__(self, idx):
         """Retrieve the i-th item of the dataset
 
         Args:
-            idx (int): item index
+            idx (int): idx-th item to retrieve
+
+        Returns:
+            image_input, image_target: the low resolution image and the high resolution image
         """
-        
-        # Coresponding identifier of the index
-        id = self.files_names[idx]
 
-        # Retrieve the target image (high resolution image)
-        target = self.data_reader.slc_data[id]
-        
-        # Process the image to decrease the resolution
-        if self.preprocessing == 'padding':
-            self.data_reader.subband_process(list(sardata.slc_data.keys())[idx], decimation = True)
+        image_input = np.load(os.path.join(self.root,'target',self.files_names[idx]))
+        image_target = np.load(os.path.join(self.root,'low_resolution',self.files_names[idx]))
 
-        elif self.preprocessing == 'hanning':
-            self.data_reader.subband_process(list(sardata.slc_data.keys())[idx], decimation = True, wd="hanning")
-
-        else:
-            self.data_reader.subband_process(list(sardata.slc_data.keys())[idx], decimation = False)
-
-        image = self.data_reader.subimages[id]
-
-        return image, target
+        return apply_processing(image_input), apply_processing(image_target)
 
     def __len__(self):
-        return len(list(self.data_reader.slc_data.keys()))
+        """Operator len that returns the size of the dataset 
+
+        Returns:
+            int: length of the dataset
+        """
+        return len(self.files_names)
+
+
+def apply_processing(data,method='equal'):
+    """A function to have the images in log mode
+
+    Args:
+        data (np.array): the images as a numpy array 
+    
+    Return: 
+        img (np.array): the processed image
+    """
+             
+    img = np.log10(np.abs(data) + 1e-8)
+    img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
+            
+    if method == "stretch":
+        p2, p98 = np.percentile(img, (2, 98))
+        img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+        
+    elif method == "equal":
+        img_rescale = exposure.equalize_hist(img)
+        
+    else:
+        raise NameError("wrong 'method' or not defined")
+            
+    return img
+
+
+dataset = SARdataset("./data_files/train")
+print(dataset[35])
+
