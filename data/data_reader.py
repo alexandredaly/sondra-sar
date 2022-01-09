@@ -23,22 +23,14 @@ import numpy as np
 import os, fnmatch
 import matplotlib.pyplot as plt 
 import matplotlib
-import numpy as np
+import cv2
 
 # Need to install scikit-image to use the following modules
 from skimage import data, img_as_float
 from skimage import exposure
 from skimage.filters import window
 
-
 from matplotlib.colors import Normalize
-
-matplotlib.rcParams['font.size'] = 8
-path = r"/home/cfren/CEI_SONDRA/2021-2022/data/SSurge_15305_01/"
-
-os.chdir(path)
-
-# doc = r"SanAnd_26524_19002_011_190221_L090HH_04_BC_s1_1x1.slc"
 
 
 class Uavsar_slc_stack_1x1():
@@ -53,6 +45,7 @@ class Uavsar_slc_stack_1x1():
         self.slc_data = {}       # SAR images
         self.subband_header = {} # Characteristics for subband processing
         self.subimages = {}
+        self.count = 0 
         
     
     def read_meta_data(self, polarisation=['HH', 'HV', 'VV']):
@@ -64,6 +57,7 @@ class Uavsar_slc_stack_1x1():
 
         # Obtain list of all files in directory
         listOfFiles = os.listdir(self.path)
+        print(listOfFiles)
         
         # Iterate on those files to search for an annotation file
         for entry in listOfFiles:  
@@ -81,7 +75,7 @@ class Uavsar_slc_stack_1x1():
                     # Read the ann file to obtain metadata
                     self.meta_data[unique_identifier] = {} # initialise dict for the currect file
                 
-                    with open(self.path + entry, 'r') as f:
+                    with open(os.path.join(self.path,entry), 'r') as f:
                         for line in f: # Iterate on each line
                             # Discard commented lines
                             line = line.strip().split(';')[0]
@@ -109,57 +103,92 @@ class Uavsar_slc_stack_1x1():
             self.subband_header[file_name]['Crop'] = None  
         
     
-    def read_data(self, meta_identifier, segment=[1], crop=None):
-        """ A method to read UAVSAR SLC 1x1 data stack
-            Inputs:
-                * polarisation = a list of polarisations to read
-                * crop = if we want to read a portion of the image, a list of the form
+    def construct_cropped_image_from_slc(self,shape,crop,data_path):
+        """Return the cropped portion of an SLC image as a numpy array.
+        Args:
+            shape (np.array): the shape of the SAR image (azimut, range)
+            crop (list): the size of the crop. [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1]
+            data_path (string): path to load the slc file
+
+        Returns:
+            np.array: portion of the image as a numpy array
+        """
+
+        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)             
+        with open(data_path, 'rb') as f:
+            f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
+            for row in range(crop[1]-crop[0]):
+                temp_array[row, :] = np.fromfile(f, dtype=np.complex64, count=crop[3]-crop[2])
+                f.seek(((crop[0]+row)*shape[1]+crop[2])*8, os.SEEK_SET)
+
+        return temp_array
+        
+      
+    def read_data(self, meta_identifier, segment=[1], crop=None, save = True, save_dir = './'):
+        """A method to read UAVSAR SLC 1x1 data stack
+
+        Args:
+            meta_identifier (string): name of the SLC file to read
+            segment (list, optional): if the SAR fly has multiple segments. Defaults to [1].
+            crop (list or int, optional): if we want to read a portion of the image, a list of the form
                     [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis
-                     1]
-                * Be careful data should be stored in matrix order:  
-                axis 0 -> azimuth & axis 1 -> range"""
-                
+                     1]. Defaults to None. If crop is an int, it breaks the entire SLC DAta into small square of size crop. 
+                    Be careful data should be stored in matrix order:  
+                    axis 0 -> azimuth & axis 1 -> range
+        """
+
         for seg in segment:
-            
             if seg <= int(self.meta_data[meta_identifier]['Number of Segments']):
+
+                # File name processing
                 file_name = meta_identifier + '_s'+ str(seg)+ '_1x1.slc'
-                data_path = self.path + file_name
-                
+                data_path = os.path.join(self.path,file_name)
                 if os.path.isfile(data_path):
-                    
                     if  file_name in list(self.slc_data.keys()):
-                        
                         print("Warning file", file_name, "will be erased by the new read" )
-                        
+                    
+                    # Read characteristics for subband processing
                     self.read_subband_header(seg, crop, file_name, meta_identifier)
-                    
                     print("Reading %s" % (data_path))
-                    
-                    if crop is not None:
-                        
-                        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)    
-                        shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
-    
-                        with open(data_path, 'rb') as f:
-                            f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
-                            for row in range(crop[1]-crop[0]):
-                                temp_array[row, :] = np.fromfile(f, dtype=np.complex64, count=crop[3]-crop[2])
-                                f.seek(((crop[0]+row)*shape[1]+crop[2])*8, os.SEEK_SET)
-                        
-                    else:
-                        
+                    shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
+
+                    # If crop is a list, crops one portion of the image 
+                    if isinstance(crop,list):
+                        temp_array = self.construct_cropped_image_from_slc(shape,crop,data_path)
+                        self.slc_data[file_name] = [temp_array]
+                        del temp_array
+
+                    # If crop is an int, breaks the image into several subimages of size crop and save them.
+                    elif isinstance(crop,int):
+                        self.slc_data[file_name] = []
+                        count = 0 
+                        previous_l = 0
+                        for l in range(0,shape[0],crop):
+                            previous_m = 0
+                            for m in range(0,shape[1],crop):
+                                if previous_m < m and previous_l < l:
+                                    temp_array = self.construct_cropped_image_from_slc(shape,[previous_l,l,previous_m,m],data_path)
+                                    self.slc_data[file_name].append(temp_array)
+                                    np.save("./data_files/train/high_resolution/{}_{}.npy".format(file_name[:-4], count), temp_array)
+                                    count += 1 
+                                    del temp_array
+                                previous_m = m 
+                            previous_l = l
+
+                    # If crop is none, read the entire image
+                    elif isinstance(crop,None):
                         temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
-                    
-                    self.slc_data[file_name] = temp_array
-                    del temp_array
-                        
+                        self.slc_data[file_name] = [temp_array]
+                        del temp_array
+
+
     def plot_amp_img(self, cplx_image):
         plt.figure()
         plt.imshow(20*np.log10(np.abs(cplx_image)+1e-15), cmap=plt.cm.gray, aspect = cplx_image.shape[1]/cplx_image.shape[0])
         plt.colorbar()
         plt.show()
                         
-    def plot_equalized_img(self, data, method="equal", crop=None, bins = 256, savefig = False):
+    def plot_equalized_img(self, data, name, method="equal", crop=None, bins = 256, savefig = False):
         """ A method to plot single UAVSAR SLC 1x1 data
             Inputs:
                 * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None. 
@@ -167,35 +196,40 @@ class Uavsar_slc_stack_1x1():
                     
         """
         
-        
-        if crop is not None:
-        
-            img = np.log10(np.abs(data[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+        for i,d in enumerate(data):
+            if crop is not None:
             
-        else:
+                img = np.log10(np.abs(d[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+                
+            else:
+                
+                img = np.log10(np.abs(d) + 1e-8)
             
-            img = np.log10(np.abs(data) + 1e-8)
-        
-        img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
+            img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
+                
             
-        
-        if method == "stretch":
-            p2, p98 = np.percentile(img, (2, 98))
-            img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+            if method == "stretch":
+                p2, p98 = np.percentile(img, (2, 98))
+                img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+                
+            elif method == "equal":
+                img_rescale = exposure.equalize_hist(img)
+                
+            else:
+                raise NameError("wrong 'method' or not defined")
             
-        elif method == "equal":
-            img_rescale = exposure.equalize_hist(img)
             
-        else:
-            raise NameError("wrong 'method' or not defined")
+            
+            fig = plt.figure(figsize=(8, 8))
+            image = img_as_float(img_rescale)
+            plt.imshow(image, cmap=plt.cm.gray) #aspect = img.shape[1]/img.shape[0])
+            plt.title(name)
+            if savefig:
+                plt.savefig(self.path + "{}.png".format(i))
+
+        #plt.show()
         
-        fig = plt.figure(figsize=(8, 8))
-        image = img_as_float(img_rescale)
-        plt.imshow(image, cmap=plt.cm.gray, aspect = img.shape[1]/img.shape[0])
-        plt.show()
         
-        if savefig:
-            plt.savefig(self.path + data_name[:-4]+'.png')
         
 
     def plot_mlpls_img(self, method="equal", all=False, crop=None, bins = 256, savefig=False):
@@ -205,13 +239,15 @@ class Uavsar_slc_stack_1x1():
                 * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
                 * all = True for plotting all data in self.data, False for plotting the 1st data
         """
+        print(self.slc_data, 'slc')
         if bool(self.slc_data):
             if all:
                 for data_name in list(self.slc_data.keys()):
                     data = self.slc_data[data_name]
+                    print(self.slc_data[data_name])
                     self.plot_equalized_img(data, method, crop, bins, savefig)
             else:
-                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]], method, crop, bins, savefig)
+                self.plot_equalized_img(self.slc_data[list(self.slc_data.keys())[0]],"Original image", method, crop, bins, savefig)
         else:
             raise KeyError("Empty dictionary")
             
@@ -226,7 +262,6 @@ class Uavsar_slc_stack_1x1():
                 *
         """
         
-        data = self.slc_data[identifier]
         RgPixelSz = self.subband_header[identifier]['RgPixelSz']
         AzPixelSz = self.subband_header[identifier]['AzPixelSz']
         RgCnt = self.subband_header[identifier]['RgCnt']
@@ -236,10 +271,13 @@ class Uavsar_slc_stack_1x1():
         
         # Spatial coordinates of the SAR image
         
-        if crop is not None:
+        if isinstance(crop, list):
             
             RgCnt = crop[3] - crop[2]  #Update the Azimuth & Range count if crop
             AzCnt = crop[1] - crop[0]
+            
+        elif isinstance(crop, int):
+            RgCnt, AzCnt = crop, crop  #Update the Azimuth & Range count if crop
             
         SarRange = RgPixelSz * np.arange(-RgCnt/2, RgCnt/2) # radial axis (x axis / axis 1 in the image)
         SarAzimuth = AzPixelSz * np.arange(-AzCnt/2, AzCnt/2) # azimuth axis (y axis /axis 0 in the image)
@@ -250,23 +288,16 @@ class Uavsar_slc_stack_1x1():
         
         # krange and kazimuth spectral dual variables
         
-        kcentral = 2/sardata.subband_header[identifier]["cmWavelength"]*100 # k = 2/lambda with lambda in meter
+        kcentral = 2/self.subband_header[identifier]["cmWavelength"]*100 # k = 2/lambda with lambda in meter
         
         # Angle de viser au sol
-        deport = (90 - sardata.subband_header[identifier]["SquintAngle"])*np.pi/180
+        deport = (90 - self.subband_header[identifier]["SquintAngle"])*np.pi/180
         
         # kudop = fdop / vavion;
         # kudopcentral = kcentral * np.sin(deport)
         
         krange = kcentral*np.cos(deport) + (1/RgPixelSz)*np.arange(- 1/2, 1/2, 1/RgCnt)
         kazimuth = kcentral * np.sin(deport) + (1/AzPixelSz)*np.arange(- 1/2, 1/2, 1/AzCnt)
-        
-
-        # Add an offset in the dual space (SAR process) ~ (FFT shift)
-        
-        data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype= np.complex64) 
-        
-        spectre = np.fft.fft2(data)
         
         # Filtering in frequency -> sub band and Aperture -> theta
         # fcos(theta) = krange & fsin(theta) = kazimuth 
@@ -290,51 +321,44 @@ class Uavsar_slc_stack_1x1():
         
         # Boolean filter (Centered)
         Filter = (np.abs(frequence - f_centre) <= sigma_f/3) * (abs(theta-theta_centre) <= sigma_t/3)
-        
-        sub_spectre = Filter * spectre
-        
-        # # # Checking spetral information
-        # 
-        # self.plot_amp_img(spectre)
-        # self.plot_amp_img(sub_spectre)
-        
-        
-        if decimation:
-            #Décimation par 2 de chaque dim, crop central
+
+
+        # Add an offset in the dual space (SAR process) ~ (FFT shift)
+        for i,data in enumerate(self.slc_data[identifier]):
+            data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype= np.complex64) 
+            print(i)
+            spectre = np.fft.fft2(data)
+
+            sub_spectre = Filter * spectre
             
-            sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
+            # # # Checking spetral information
+            # 
+            # self.plot_amp_img(spectre)
             # self.plot_amp_img(sub_spectre)
-        
-        
-        if wd is not None:
             
-            sub_spectre = window(wd, sub_spectre.shape ) * sub_spectre
-        
-        if  identifier in list(self.subimages.keys()):
-                        
-            print("Warning sub images", identifier, "will be erased by the processing" )
-        
-        self.subimages[identifier]  = np.fft.ifft2(sub_spectre)
+            
+            if decimation:
+                #Décimation par 2 de chaque dim, crop central
+                
+                sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
+                # self.plot_amp_img(sub_spectre)
 
-    
-    
-# Load an example image
+            
+            if wd is not None:
+                
+                sub_spectre = window(wd, sub_spectre.shape ) * sub_spectre
+            
+            if  identifier in list(self.subimages.keys()):
+                print("Warning sub images", identifier, "will be erased by the processing" )
+                #self.subimages[identifier].append(np.fft.ifft2(sub_spectre))
+                np.save("./data_files/train/low_resolution/{}_{}.npy".format(identifier[:-4], i), np.fft.ifft2(sub_spectre))
+                del sub_spectre
+                
+            else:
+                self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
+                del sub_spectre
+            
 
-sardata = Uavsar_slc_stack_1x1(path)
-sardata.read_meta_data(polarisation=['HH'])
-sardata.read_data(list(sardata.meta_data.keys())[1], crop = [15300,16800,3700,5500])
 
-#plot originial SAR image 
-sardata.plot_mlpls_img(savefig=False)
 
-#SAR image halve downscaled in dual band with zero padding 
-sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = False)
-sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
-# 
-# #SAR image halve downscaled in dual band
-sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True)
-sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
-# 
-# #SAR image halve downscaled in dual band with hanning smoothing
-sardata.subband_process(list(sardata.slc_data.keys())[0], decimation = True, wd="hanning")
-sardata.plot_equalized_img(sardata.subimages[list(sardata.subimages.keys())[0]])
+
