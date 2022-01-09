@@ -23,6 +23,7 @@ import numpy as np
 import os, fnmatch
 import matplotlib.pyplot as plt 
 import matplotlib
+import cv2
 
 # Need to install scikit-image to use the following modules
 from skimage import data, img_as_float
@@ -102,55 +103,85 @@ class Uavsar_slc_stack_1x1():
             self.subband_header[file_name]['Crop'] = None  
         
     
-    def read_data(self, meta_identifier, segment=[1], crop=None):
-        """ A method to read UAVSAR SLC 1x1 data stack
-            Inputs:
-                * polarisation = a list of polarisations to read
-                * crop = if we want to read a portion of the image, a list of the form
+    def construct_cropped_image_from_slc(self,shape,crop,data_path):
+        """Return the cropped portion of an SLC image as a numpy array.
+        Args:
+            shape (np.array): the shape of the SAR image (azimut, range)
+            crop (list): the size of the crop. [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1]
+            data_path (string): path to load the slc file
+
+        Returns:
+            np.array: portion of the image as a numpy array
+        """
+
+        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)             
+        with open(data_path, 'rb') as f:
+            f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
+            for row in range(crop[1]-crop[0]):
+                temp_array[row, :] = np.fromfile(f, dtype=np.complex64, count=crop[3]-crop[2])
+                f.seek(((crop[0]+row)*shape[1]+crop[2])*8, os.SEEK_SET)
+
+        return temp_array
+        
+      
+    def read_data(self, meta_identifier, segment=[1], crop=None, save = True, save_dir = './'):
+        """A method to read UAVSAR SLC 1x1 data stack
+
+        Args:
+            meta_identifier (string): name of the SLC file to read
+            segment (list, optional): if the SAR fly has multiple segments. Defaults to [1].
+            crop (list or int, optional): if we want to read a portion of the image, a list of the form
                     [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis
-                     1]
-                * Be careful data should be stored in matrix order:  
-                axis 0 -> azimuth & axis 1 -> range"""
-                
+                     1]. Defaults to None. If crop is an int, it breaks the entire SLC DAta into small square of size crop. 
+                    Be careful data should be stored in matrix order:  
+                    axis 0 -> azimuth & axis 1 -> range
+        """
+
         for seg in segment:
-            
             if seg <= int(self.meta_data[meta_identifier]['Number of Segments']):
+
+                # File name processing
                 file_name = meta_identifier + '_s'+ str(seg)+ '_1x1.slc'
                 data_path = os.path.join(self.path,file_name)
-                print(data_path)
-
-                
                 if os.path.isfile(data_path):
-                    
                     if  file_name in list(self.slc_data.keys()):
-                        
                         print("Warning file", file_name, "will be erased by the new read" )
-                        
-                    self.read_subband_header(seg, crop, file_name, meta_identifier)
                     
+                    # Read characteristics for subband processing
+                    self.read_subband_header(seg, crop, file_name, meta_identifier)
                     print("Reading %s" % (data_path))
-
                     shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
-    
-                    if crop is not None:
-                        
-                        temp_array = np.zeros((crop[1]-crop[0], crop[3]-crop[2]), dtype= np.complex64)    
-                        
-                        with open(data_path, 'rb') as f:
-                            f.seek((crop[0]*shape[1]+crop[2])*8, os.SEEK_SET)
-                            for row in range(crop[1]-crop[0]):
-                                temp_array[row, :] = np.fromfile(f, dtype=np.complex64, count=crop[3]-crop[2])
-                                f.seek(((crop[0]+row)*shape[1]+crop[2])*8, os.SEEK_SET)
-                        
-                    else:
-                        
+
+                    # If crop is a list, crops one portion of the image 
+                    if isinstance(crop,list):
+                        temp_array = self.construct_cropped_image_from_slc(shape,crop,data_path)
+                        self.slc_data[file_name] = [temp_array]
+                        del temp_array
+
+                    # If crop is an int, breaks the image into several subimages of size crop and save them.
+                    elif isinstance(crop,int):
+                        self.slc_data[file_name] = []
+                        count = 0 
+                        previous_l = 0
+                        for l in range(0,shape[0],crop):
+                            previous_m = 0
+                            for m in range(0,shape[1],crop):
+                                if previous_m < m and previous_l < l:
+                                    temp_array = self.construct_cropped_image_from_slc(shape,[previous_l,l,previous_m,m],data_path)
+                                    self.slc_data[file_name].append(temp_array)
+                                    np.save("./data_files/train/high_resolution/{}_{}.npy".format(file_name[:-4], count), temp_array)
+                                    count += 1 
+                                    del temp_array
+                                previous_m = m 
+                            previous_l = l
+
+                    # If crop is none, read the entire image
+                    elif isinstance(crop,None):
                         temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
-                        print(temp_array.shape)
+                        self.slc_data[file_name] = [temp_array]
+                        del temp_array
 
-                    self.slc_data[file_name] = temp_array
-                    del temp_array
 
-                        
     def plot_amp_img(self, cplx_image):
         plt.figure()
         plt.imshow(20*np.log10(np.abs(cplx_image)+1e-15), cmap=plt.cm.gray, aspect = cplx_image.shape[1]/cplx_image.shape[0])
@@ -165,37 +196,38 @@ class Uavsar_slc_stack_1x1():
                     
         """
         
-        
-        if crop is not None:
-        
-            img = np.log10(np.abs(data[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+        for i,d in enumerate(data):
+            if crop is not None:
             
-        else:
+                img = np.log10(np.abs(d[crop[0]:crop[1], crop[2]:crop[3]]) + 1e-8 )
+                
+            else:
+                
+                img = np.log10(np.abs(d) + 1e-8)
             
-            img = np.log10(np.abs(data) + 1e-8)
-        
-        img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
+            img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
+                
             
-        
-        if method == "stretch":
-            p2, p98 = np.percentile(img, (2, 98))
-            img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+            if method == "stretch":
+                p2, p98 = np.percentile(img, (2, 98))
+                img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+                
+            elif method == "equal":
+                img_rescale = exposure.equalize_hist(img)
+                
+            else:
+                raise NameError("wrong 'method' or not defined")
             
-        elif method == "equal":
-            img_rescale = exposure.equalize_hist(img)
             
-        else:
-            raise NameError("wrong 'method' or not defined")
-        
-        fig = plt.figure(figsize=(8, 8))
-        image = img_as_float(img_rescale)
-        plt.imshow(image, cmap=plt.cm.gray, aspect = img.shape[1]/img.shape[0])
-        plt.title(name)
-        plt.axis('equal')
-        if savefig:
-            plt.savefig(self.path + "stuff" +'.png')
+            
+            fig = plt.figure(figsize=(8, 8))
+            image = img_as_float(img_rescale)
+            plt.imshow(image, cmap=plt.cm.gray) #aspect = img.shape[1]/img.shape[0])
+            plt.title(name)
+            if savefig:
+                plt.savefig(self.path + "{}.png".format(i))
 
-        plt.show()
+        #plt.show()
         
         
         
@@ -230,7 +262,6 @@ class Uavsar_slc_stack_1x1():
                 *
         """
         
-        data = self.slc_data[identifier]
         RgPixelSz = self.subband_header[identifier]['RgPixelSz']
         AzPixelSz = self.subband_header[identifier]['AzPixelSz']
         RgCnt = self.subband_header[identifier]['RgCnt']
@@ -240,10 +271,13 @@ class Uavsar_slc_stack_1x1():
         
         # Spatial coordinates of the SAR image
         
-        if crop is not None:
+        if isinstance(crop, list):
             
             RgCnt = crop[3] - crop[2]  #Update the Azimuth & Range count if crop
             AzCnt = crop[1] - crop[0]
+            
+        elif isinstance(crop, int):
+            RgCnt, AzCnt = crop, crop  #Update the Azimuth & Range count if crop
             
         SarRange = RgPixelSz * np.arange(-RgCnt/2, RgCnt/2) # radial axis (x axis / axis 1 in the image)
         SarAzimuth = AzPixelSz * np.arange(-AzCnt/2, AzCnt/2) # azimuth axis (y axis /axis 0 in the image)
@@ -264,13 +298,6 @@ class Uavsar_slc_stack_1x1():
         
         krange = kcentral*np.cos(deport) + (1/RgPixelSz)*np.arange(- 1/2, 1/2, 1/RgCnt)
         kazimuth = kcentral * np.sin(deport) + (1/AzPixelSz)*np.arange(- 1/2, 1/2, 1/AzCnt)
-        
-
-        # Add an offset in the dual space (SAR process) ~ (FFT shift)
-        
-        data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype= np.complex64) 
-        
-        spectre = np.fft.fft2(data)
         
         # Filtering in frequency -> sub band and Aperture -> theta
         # fcos(theta) = krange & fsin(theta) = kazimuth 
@@ -294,32 +321,44 @@ class Uavsar_slc_stack_1x1():
         
         # Boolean filter (Centered)
         Filter = (np.abs(frequence - f_centre) <= sigma_f/3) * (abs(theta-theta_centre) <= sigma_t/3)
-        
-        sub_spectre = Filter * spectre
-        
-        # # # Checking spetral information
-        # 
-        # self.plot_amp_img(spectre)
-        # self.plot_amp_img(sub_spectre)
-        
-        
-        if decimation:
-            #Décimation par 2 de chaque dim, crop central
-            
-            sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
-            # self.plot_amp_img(sub_spectre)
 
-        
-        if wd is not None:
+
+        # Add an offset in the dual space (SAR process) ~ (FFT shift)
+        for i,data in enumerate(self.slc_data[identifier]):
+            data = data * np.exp(-2*np.pi* 1j *(RRange * krange.min() + AAzimuth * kazimuth.min()), dtype= np.complex64) 
+            print(i)
+            spectre = np.fft.fft2(data)
+
+            sub_spectre = Filter * spectre
             
-            sub_spectre = window(wd, sub_spectre.shape ) * sub_spectre
-        
-        if  identifier in list(self.subimages.keys()):
-                        
-            print("Warning sub images", identifier, "will be erased by the processing" )
-        
-        self.subimages[identifier]  = np.fft.ifft2(sub_spectre)
-        print(len(self.subimages.items()))
+            # # # Checking spetral information
+            # 
+            # self.plot_amp_img(spectre)
+            # self.plot_amp_img(sub_spectre)
+            
+            
+            if decimation:
+                #Décimation par 2 de chaque dim, crop central
+                
+                sub_spectre = sub_spectre[sub_spectre.shape[0]//4:(3*sub_spectre.shape[0])//4, sub_spectre.shape[1]//4:(3*sub_spectre.shape[1])//4] 
+                # self.plot_amp_img(sub_spectre)
+
+            
+            if wd is not None:
+                
+                sub_spectre = window(wd, sub_spectre.shape ) * sub_spectre
+            
+            if  identifier in list(self.subimages.keys()):
+                print("Warning sub images", identifier, "will be erased by the processing" )
+                #self.subimages[identifier].append(np.fft.ifft2(sub_spectre))
+                np.save("./data_files/train/low_resolution/{}_{}.npy".format(identifier[:-4], i), np.fft.ifft2(sub_spectre))
+                del sub_spectre
+                
+            else:
+                self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
+                del sub_spectre
+            
+
 
 
 
