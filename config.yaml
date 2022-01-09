@@ -1,0 +1,17 @@
+RAW_DATA_DIR: './data_files/raw_data'
+TRAIN_DATA_DIR: './data_files/train'
+DATASET:
+  POLARISATION: ['HH']
+  PREPROCESSING: 
+    DECIMATION: True
+    WINDOW: "hanning"
+  IMAGE_SIZE: 1000
+  BATCH_SIZE: 256
+  VALID_RATIO: 0.2
+TRAIN:
+  EPOCH: 10
+  LOG_DIR: 'tensorboard/metrics'
+  SAVE_DIR: '../models'
+TEST:
+  PATH_TO_MODEL: '../best_model.pth'
+  PATH_TO_CSV: './test.csv'
