@@ -1,5 +1,6 @@
 numpy 
 scikit-image
+timm
 torch > 1.6
 tensorboard
 matplotlib
