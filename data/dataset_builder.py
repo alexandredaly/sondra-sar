@@ -10,7 +10,7 @@ def build_dataset(cfg):
     if not os.path.isdir(cfg["TRAIN_DATA_DIR"]):
         os.mkdir(cfg["TRAIN_DATA_DIR"])
         os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], 'low_resolution'))
-        os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], 'target'))
+        os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], 'high_resolution'))
     
     # Init data reader
     sardata = Uavsar_slc_stack_1x1(cfg["RAW_DATA_DIR"])
