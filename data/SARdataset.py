@@ -21,8 +21,8 @@ class SARdataset(Dataset):
         """
 
         self.root = root
-        self.files_names = [f for f in os.listdir(os.path.join(self.root,'target')) if 
-                            os.path.isfile(os.path.join(self.root,'target', f))]
+        self.files_names = [f for f in os.listdir(os.path.join(self.root,'high_resolution')) if 
+                            os.path.isfile(os.path.join(self.root,'high_resolution', f))]
         print(self.files_names)
 
 
@@ -36,7 +36,7 @@ class SARdataset(Dataset):
             image_input, image_target: the low resolution image and the high resolution image
         """
 
-        image_input = np.load(os.path.join(self.root,'target',self.files_names[idx]))
+        image_input = np.load(os.path.join(self.root,'high_resolution',self.files_names[idx]))
         image_target = np.load(os.path.join(self.root,'low_resolution',self.files_names[idx]))
 
         return apply_processing(image_input), apply_processing(image_target)
