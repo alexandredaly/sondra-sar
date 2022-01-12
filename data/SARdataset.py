@@ -73,7 +73,7 @@ def apply_processing(data,method='equal'):
     else:
         raise NameError("wrong 'method' or not defined")
             
-    return img
+    return img_rescale
 
 
 dataset = SARdataset("./data_files/train")
