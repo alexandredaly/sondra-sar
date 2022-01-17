@@ -4,10 +4,19 @@
 
 ## Requirements
 
-Before running any code, make sure to install all the dependancies by running 
+Before running any code, make sure to install all the dependancies by running
 ```
 pip3 install -r requirements.txt
 ```
+
+## Pre-commit
+
+To enable the pre commit checks go to the root and type make on the terminal
+```
+cd sondra-sar
+make
+```
+
 
 ## Data Preparation
 
@@ -19,11 +28,11 @@ sudo chmod +x download-data.sh
 ./download-data.sh
 ```
 
-### Build a training dataset 
+### Build a training dataset
 
-To build a dataset that will be used for training we need to split the raw SAR data into several subimages. 
-The idea is to crop squares of size 'IMAGE_SIZE' (that you can specify in the config.yaml file) from the SAR image. 
-For example, if the SAR image is 10000x60000 pixels and IMAGE_SIZE is 1000, then we will generate 600 subimages of size 1000x1000 pixels. 
+To build a dataset that will be used for training we need to split the raw SAR data into several subimages.
+The idea is to crop squares of size 'IMAGE_SIZE' (that you can specify in the config.yaml file) from the SAR image.
+For example, if the SAR image is 10000x60000 pixels and IMAGE_SIZE is 1000, then we will generate 600 subimages of size 1000x1000 pixels.
 
 This can be done running the following commands
 ```
@@ -31,7 +40,7 @@ cd data
 python3 dataset_builder.py --path_to_config ../config.yaml
 ```
 
-The generated data will be stored in the data_files/train folder. 
+The generated data will be stored in the data_files/train folder.
 The directory structure of your data folder should look like this
 ```
 .
@@ -48,17 +57,17 @@ The directory structure of your data folder should look like this
 
 ## Config
 
-A config file is provided to store any 'global variable' that we would want to tune later on. 
+A config file is provided to store any 'global variable' that we would want to tune later on.
 The goal is to have all the variables centralized to easely change parameters when retraining a model for example and to have a clean code.
 
 # Les participants
 
-- côté SONDRA : 
-    - Chengfang Ren <chengfang.ren@centralesupelec.fr>, 
+- côté SONDRA :
+    - Chengfang Ren <chengfang.ren@centralesupelec.fr>,
     - hinostroza Israel <Israel.Hinostroza@centralesupelec.fr>
-- côté étudiants : 
-    - Youssef Adarrab <youssef.adarrab@student-cs.fr>, 
-    - Daniel Colombo <daniel.colombo@student-cs.fr>, 
+- côté étudiants :
+    - Youssef Adarrab <youssef.adarrab@student-cs.fr>,
+    - Daniel Colombo <daniel.colombo@student-cs.fr>,
     - Alexandre Daly <alexandre.daly@student-cs.fr>
-- encadrant CentraleSupélec : 
+- encadrant CentraleSupélec :
     - Jeremy Fix jeremy.fix@centralesupelec.fr>
