@@ -124,7 +124,7 @@ class Uavsar_slc_stack_1x1():
         return temp_array
         
       
-    def read_data(self, meta_identifier, segment=[1], crop=None, save = True, save_dir = './'):
+    def read_data(self, meta_identifier, segment=list(range(1,8)), crop=None, save = True, save_dir = './'):
         """A method to read UAVSAR SLC 1x1 data stack
 
         Args:
@@ -138,49 +138,51 @@ class Uavsar_slc_stack_1x1():
         """
 
         for seg in segment:
-            if seg <= int(self.meta_data[meta_identifier]['Number of Segments']):
+            try:
+                if seg <= int(self.meta_data[meta_identifier]['Number of Segments']):
 
-                # File name processing
-                file_name = meta_identifier + '_s'+ str(seg)+ '_1x1.slc'
-                data_path = os.path.join(self.path,file_name)
-                if os.path.isfile(data_path):
-                    if  file_name in list(self.slc_data.keys()):
-                        print("Warning file", file_name, "will be erased by the new read" )
-                    
-                    # Read characteristics for subband processing
-                    self.read_subband_header(seg, crop, file_name, meta_identifier)
-                    print("Reading %s" % (data_path))
-                    shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
+                    # File name processing
+                    file_name = meta_identifier + '_s'+ str(seg)+ '_1x1.slc'
+                    data_path = os.path.join(self.path,file_name)
+                    if os.path.isfile(data_path):
+                        if  file_name in list(self.slc_data.keys()):
+                            print("Warning file", file_name, "will be erased by the new read" )
+                        
+                        # Read characteristics for subband processing
+                        self.read_subband_header(seg, crop, file_name, meta_identifier)
+                        print("Reading %s" % (data_path))
+                        shape = (self.subband_header[file_name]['AzCnt'], self.subband_header[file_name]['RgCnt'])
 
-                    # If crop is a list, crops one portion of the image 
-                    if isinstance(crop,list):
-                        temp_array = self.construct_cropped_image_from_slc(shape,crop,data_path)
-                        self.slc_data[file_name] = [temp_array]
-                        del temp_array
+                        # If crop is a list, crops one portion of the image 
+                        if isinstance(crop,list):
+                            temp_array = self.construct_cropped_image_from_slc(shape,crop,data_path)
+                            self.slc_data[file_name] = [temp_array]
+                            del temp_array
 
-                    # If crop is an int, breaks the image into several subimages of size crop and save them.
-                    elif isinstance(crop,int):
-                        self.slc_data[file_name] = []
-                        count = 0 
-                        previous_l = 0
-                        for l in range(0,shape[0],crop):
-                            previous_m = 0
-                            for m in range(0,shape[1],crop):
-                                if previous_m < m and previous_l < l:
-                                    temp_array = self.construct_cropped_image_from_slc(shape,[previous_l,l,previous_m,m],data_path)
-                                    self.slc_data[file_name].append(temp_array)
-                                    np.save("./data_files/train/high_resolution/{}_{}.npy".format(file_name[:-4], count), temp_array)
-                                    count += 1 
-                                    del temp_array
-                                previous_m = m 
-                            previous_l = l
+                        # If crop is an int, breaks the image into several subimages of size crop and save them.
+                        elif isinstance(crop,int):
+                            self.slc_data[file_name] = []
+                            count = 0 
+                            previous_l = 0
+                            for l in range(0,shape[0],crop):
+                                previous_m = 0
+                                for m in range(0,shape[1],crop):
+                                    if previous_m < m and previous_l < l:
+                                        temp_array = self.construct_cropped_image_from_slc(shape,[previous_l,l,previous_m,m],data_path)
+                                        self.slc_data[file_name].append(temp_array)
+                                        np.save("./data_files/train/high_resolution/{}_{}.npy".format(file_name[:-4], count), temp_array)
+                                        count += 1 
+                                        del temp_array
+                                    previous_m = m 
+                                previous_l = l
 
-                    # If crop is none, read the entire image
-                    elif isinstance(crop,None):
-                        temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
-                        self.slc_data[file_name] = [temp_array]
-                        del temp_array
-
+                        # If crop is none, read the entire image
+                        elif isinstance(crop,None):
+                            temp_array = np.fromfile( data_path, dtype=np.complex64).reshape(shape)
+                            self.slc_data[file_name] = [temp_array]
+                            del temp_array
+            except: 
+                break
 
     def plot_amp_img(self, cplx_image):
         plt.figure()
