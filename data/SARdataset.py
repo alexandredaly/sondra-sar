@@ -1,9 +1,11 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import Dataset
 from skimage import exposure
+from skimage import data, img_as_float
 
 class SARdataset(Dataset):
     """Store the SAR data into a torch dataset like object. 
@@ -36,8 +38,8 @@ class SARdataset(Dataset):
             image_input, image_target: the low resolution image and the high resolution image
         """
 
-        image_input = np.load(os.path.join(self.root,'high_resolution',self.files_names[idx]))
-        image_target = np.load(os.path.join(self.root,'low_resolution',self.files_names[idx]))
+        image_input = np.load(os.path.join(self.root,'low_resolution',self.files_names[idx]))
+        image_target = np.load(os.path.join(self.root,'high_resolution',self.files_names[idx]))
 
         return apply_processing(image_input), apply_processing(image_target)
 
@@ -61,21 +63,42 @@ def apply_processing(data,method='equal'):
     """
              
     img = np.log10(np.abs(data) + 1e-8)
-    img = (img - img.min())/(img.max() - img.min()) #rescale between 0 and 1
-            
+    return img
+
+
+def plot_sample(item, method = "stretch"):
+    """Function to plot a sample (low_resolution,high_resolution) 
+
+    Args:
+        item (tuple): an item from the SARdataset
+    """
+    
+    # Process image to better visualize when plotting 
     if method == "stretch":
-        p2, p98 = np.percentile(img, (2, 98))
-        img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
-        
+        p2, p98 = np.percentile(item[0], (2, 98))
+        img_low = exposure.rescale_intensity(item[0], in_range=(p2, p98))
+        p2, p98 = np.percentile(item[1], (2, 98))
+        img_low = exposure.rescale_intensity(item[1], in_range=(p2, p98))
+
     elif method == "equal":
-        img_rescale = exposure.equalize_hist(img)
-        
+        img_low = exposure.equalize_hist(item[0])
+        img_high = exposure.equalize_hist(item[1])
+
     else:
         raise NameError("wrong 'method' or not defined")
-            
-    return img_rescale
+    
+    # Plot low resolution image
+    plt.subplot(1,2,1)
+    plt.title("Low Resolution")
+    plt.imshow(img_as_float(item[0]),cmap=plt.cm.gray)
 
+    # Plot high resolution image
+    plt.subplot(1,2,2)
+    plt.title("High Resolution")
+    plt.imshow(img_as_float(item[1]), cmap=plt.cm.gray)
+    plt.show()
 
-dataset = SARdataset("./data_files/train")
-print(dataset[35])
+if __name__== "__main__":
+    dataset = SARdataset("./data_files/train")
+    print(plot_sample(dataset[35]))
 
