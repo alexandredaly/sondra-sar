@@ -15,7 +15,7 @@ def create_dataset(cfg):
     train_valid_dataset = SARdataset(os.path.join('data/', cfg['TRAIN_DATA_DIR'][2:]))
 
     # Split it into training and validation sets
-    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset))
+    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
     nb_valid =  int(valid_ratio * len(train_valid_dataset))
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(train_valid_dataset, [nb_train, nb_valid])
     
