@@ -21,8 +21,12 @@ def build_dataset(cfg):
 
         # Build the training set 
         sardata.read_data(identifier, crop = cfg["DATASET"]["IMAGE_SIZE"])
-        sardata.subband_process(identifier+"_s1_1x1.slc", decimation = cfg["DATASET"]["PREPROCESSING"]["DECIMATION"],
-                                     wd=cfg["DATASET"]["PREPROCESSING"]["WINDOW"])
+        for i in range(1,8):
+            try:
+                sardata.subband_process(identifier+"_s{}_1x1.slc".format(i), decimation = cfg["DATASET"]["PREPROCESSING"]["DECIMATION"],
+                                            wd=cfg["DATASET"]["PREPROCESSING"]["WINDOW"])
+            except:
+                break
 
 
 if __name__=="__main__":
