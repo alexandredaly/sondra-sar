@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 from data.SARdataset import SARdataset
 from data.dataset_transformer import DatasetTransformer
 from models.network_swinir import SwinIR as net 
+from models.model_plain import ModelPlain as M
+
 
 # Create datasets
 def create_dataset(cfg):
@@ -74,5 +76,15 @@ if __name__=="__main__":
     print("The validation set contains {} images, in {} batches".format(len(valid_loader.dataset), len(valid_loader)))
 
     # Create an instance of SwinIR model
-    model = net(img_size=cfg['DATASET'][''])
+    model = net(upscale=4,
+                in_chans=1,
+                img_size=cfg['DATASET']['IMAGE_SIZE'],
+                window_size=8,
+                img_range=1.0,
+                depths=[6, 6, 6, 6, 6, 6],
+                embed_dim=180,
+                num_heads=[6, 6, 6, 6, 6, 6],
+                mlp_ratio=2,
+                upsampler="nearest+conv",
+                resi_connection="1conv")
 
