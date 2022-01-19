@@ -5,6 +5,7 @@ import torch
 import torchvision.transforms as transforms
 from data.SARdataset import SARdataset
 from data.dataset_transformer import DatasetTransformer
+from models.network_swinir import SwinIR as net 
 
 # Create datasets
 def create_dataset(cfg):
@@ -23,6 +24,25 @@ def create_dataset(cfg):
     train_dataset = DatasetTransformer(train_dataset, transforms.ToTensor())
     valid_dataset = DatasetTransformer(valid_dataset, transforms.ToTensor())
     return train_dataset, valid_dataset
+
+def create_dataloader(cfg, train_dataset, valid_dataset):
+    # Loading the batch size and the number of CPU threads from the config.yaml file
+    num_threads = cfg['DATASET']['NUM_THREADS'] 
+    batch_size  = cfg['DATASET']['BATCH_SIZE']
+
+    # Define the dataloaders for the train and validation sets
+    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
+                                            batch_size=batch_size,
+                                            shuffle=True,                # <-- this reshuffles the data at every epoch
+                                            num_workers=num_threads)
+
+    valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset,
+                                            batch_size=batch_size, 
+                                            shuffle=False,
+                                            num_workers=num_threads)
+
+    return train_loader, valid_loader
+
 
 
 if __name__=="__main__":
@@ -45,4 +65,14 @@ if __name__=="__main__":
 
     # Build the datasets
     train_dataset, valid_dataset = create_dataset(cfg)
+
+    # Build the dataloaders
+    train_loader, valid_loader = create_dataloader(cfg, train_dataset, valid_dataset)
+
+    # Print informations about the dataset size and number of batches
+    print("The train set contains {} images, in {} batches".format(len(train_loader.dataset), len(train_loader)))
+    print("The validation set contains {} images, in {} batches".format(len(valid_loader.dataset), len(valid_loader)))
+
+    # Create an instance of SwinIR model
+    model = net(img_size=cfg['DATASET'][''])
 
