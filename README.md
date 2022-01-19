@@ -51,6 +51,9 @@ The directory structure of your data folder should look like this
 A config file is provided to store any 'global variable' that we would want to tune later on. 
 The goal is to have all the variables centralized to easely change parameters when retraining a model for example and to have a clean code.
 
+## Model Training
+
+
 # Les participants
 
 - côté SONDRA : 
