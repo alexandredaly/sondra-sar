@@ -37,7 +37,7 @@ For example, if the SAR image is 10000x60000 pixels and IMAGE_SIZE is 1000, then
 This can be done running the following commands
 ```
 cd data
-python3 dataset_builder.py --path_to_config ../config.yaml
+python3 dataset_builder.py --path_to_config ../src/config.yaml
 ```
 
 The generated data will be stored in the data_files/train folder.
@@ -52,13 +52,19 @@ The directory structure of your data folder should look like this
 ├── data_reader.py
 ├── dataset_builder.py
 ├── download-data.sh
-└── SARdataset.py
 ```
 
 ## Config
 
 A config file is provided to store any 'global variable' that we would want to tune later on.
 The goal is to have all the variables centralized to easely change parameters when retraining a model for example and to have a clean code.
+
+## Model Training
+To train the model, choose everything you need in the config file and launch this command
+```
+cd src
+python3 train.py --path_to_config ./config.yaml
+```
 
 # Les participants
 

@@ -1,0 +1,53 @@
+RAW_DATA_DIR: './data_files/raw_data/SSurge_12600_14170_008_141120_L090HH_01_BC_s1_1x1'
+TRAIN_DATA_DIR: '../data/data_files/train'
+DATASET:
+  POLARISATION: ['HH']
+  PREPROCESSING:
+    DOWNSCALE_FACTOR: 2
+    DECIMATION: True
+    WINDOW: "hanning"
+  IMAGE_SIZE: 250
+  NUM_THREADS: 4
+  BATCH_SIZE: 32
+  VALID_RATIO: 0.2
+TRAIN:
+  CHECKPOINT_STEP: 5
+  PRETRAINED:
+    BOOL: False
+    PATH: ".."
+    STRICT : True
+  LOSS :
+    NAME: "l1"
+    WEIGHT: 1
+  OPTIMIZER:
+    NAME: Adam
+    ADAM:
+      WEIGHT_DECAY: 0
+      LR_INITIAL: 0.001
+  SCHEDULER:
+    NAME: "MultiStep"
+    MULTISTEP:
+      STEPS: [200000, 400000, 600000, 800000, 1000000, 2000000]
+      GAMMA: 0.5
+  REGULARIZER:
+    ORTHSTEP: False
+    CLIPSTEP: False
+  EPOCH: 1
+  TENSORBOARD_DIR: 'tensorboard/'
+  SAVE_MODEL_DIR: '../trained_models'
+TEST:
+  PATH_TO_MODEL: '../best_model.pth'
+
+MODEL:
+  NAME: "SwinTransformer"
+  SWINTRANSFORMER:
+    IN_CHANNELS: 1
+    WINDOW_SIZE: 8
+    IMG_SIZE: 64
+    IMG_RANGE: 1.0
+    DEPTHS : [6, 6, 6, 6]
+    EMBED_DIM: 60
+    NUM_HEADS: [6, 6, 6, 6]
+    MLP_RATIO: 2
+    UPSAMPLER: "pixelshuffledirect"
+    RESI_CONNECTION: "1conv"
