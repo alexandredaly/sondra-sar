@@ -21,6 +21,7 @@ TRAIN:
     WEIGHT: 1
   OPTIMIZER:
     NAME: Adam
+    CLIPGRAD: 0 
     ADAM:
       WEIGHT_DECAY: 0
       LR_INITIAL: 0.001

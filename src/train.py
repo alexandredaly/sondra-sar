@@ -89,6 +89,7 @@ def main(cfg, path_to_config):
             optimizer,
             device,
             cfg["TRAIN"]["LOSS"]["WEIGHT"],
+            clipgrad = cfg["TRAIN"]["OPTIMIZER"]["CLIPGRAD"]
         )
         valid_loss, psnr, restored_images, target_restored_images = valid_one_epoch(
             model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
