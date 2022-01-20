@@ -21,7 +21,7 @@ TRAIN:
     WEIGHT: 1
   OPTIMIZER:
     NAME: Adam
-    CLIPGRAD: 0 
+    CLIPGRAD: 0
     ADAM:
       WEIGHT_DECAY: 0
       LR_INITIAL: 0.001
@@ -31,8 +31,8 @@ TRAIN:
       STEPS: [200000, 400000, 600000, 800000, 1000000, 2000000]
       GAMMA: 0.5
   REGULARIZER:
-    ORTHSTEP: False
-    CLIPSTEP: False
+    ORTHSTEP: 0
+    CLIPSTEP: 0
   EPOCH: 1
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
