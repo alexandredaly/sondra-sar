@@ -19,6 +19,7 @@ from tools.train_utils import (
 )
 from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
+from tools.regularizers import regularizer_orth2, regularizer_clip
 
 
 def main(cfg, path_to_config):
@@ -28,6 +29,17 @@ def main(cfg, path_to_config):
         cfg (dict): config with all the necessary parameters
         path_to_config(string): path to the config file
     """
+
+    # TODO: Check what is merge_bn and tidy_sequential and where it is used
+    # links : https://github.com/cszn/KAIR/blob/72e93351bca41d1b1f6a4c3e1957f5bffccc7101/models/model_base.py#L205
+
+    # TODO: Check what is update_E and if used or not :
+    # links : https://github.com/cszn/KAIR/blob/72e93351bca41d1b1f6a4c3e1957f5bffccc7101/models/model_base.py#L188
+
+    # TODO: Check whats is img_size in swintransformer
+    # (int: it is not the input image size because we can feed images of different size than im_size)
+
+    # TODO: Check what is depths and HEAD in SwinTransformers
 
     # Load data
     train_loader, valid_loader = loader.main(cfg=cfg)
@@ -82,6 +94,7 @@ def main(cfg, path_to_config):
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
         print("EPOCH : {}".format(epoch))
 
+        # Train
         training_loss = train_one_epoch(
             model,
             train_loader,
@@ -89,7 +102,16 @@ def main(cfg, path_to_config):
             optimizer,
             device,
             cfg["TRAIN"]["LOSS"]["WEIGHT"],
+            clipgrad=cfg["TRAIN"]["OPTIMIZER"]["CLIPGRAD"],
         )
+
+        # Apply Regularization
+        if cfg["TRAIN"]["REGULARIZER"]["ORTHSTEP"] > 0:
+            model.apply(regularizer_orth2)
+        if cfg["TRAIN"]["REGULARIZER"]["CLIPSTEP"] > 0:
+            model.apply(regularizer_clip)
+
+        # Validation
         valid_loss, psnr, restored_images, target_restored_images = valid_one_epoch(
             model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
         )

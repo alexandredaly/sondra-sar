@@ -3,7 +3,7 @@ import torch
 import tqdm
 
 
-def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight):
+def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipgrad = 0):
     """Train the model for one epoch
 
     Args:
@@ -34,6 +34,11 @@ def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight):
         # Backward and optimize
         optimizer.zero_grad()
         loss.backward()
+
+        # clip_grad_norm helps prevent the exploding gradient problem
+        if clipgrad > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clipgrad, norm_type=2)
+
         optimizer.step()
 
     return tot_loss / n_samples

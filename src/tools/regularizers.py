@@ -2,29 +2,22 @@ import torch
 import torch.nn as nn
 
 
-"""
-# --------------------------------------------
-# Kai Zhang (github: https://github.com/cszn)
-# 03/Mar/2019
-# --------------------------------------------
-"""
-
-
-# --------------------------------------------
-# SVD Orthogonal Regularization
-# --------------------------------------------
 def regularizer_orth(m):
     """
-    # ----------------------------------------
-    # SVD Orthogonal Regularization
-    # ----------------------------------------
-    # Applies regularization to the training by performing the
-    # orthogonalization technique described in the paper
-    # This function is to be called by the torch.nn.Module.apply() method,
-    # which applies svd_orthogonalization() to every layer of the model.
-    # usage: net.apply(regularizer_orth)
-    # ----------------------------------------
+    ----------------------------------------
+    SVD Orthogonal Regularization
+    ----------------------------------------
+    Applies regularization to the training by performing the
+    orthogonalization technique described in the paper
+    This function is to be called by the torch.nn.Module.apply() method,
+    which applies svd_orthogonalization() to every layer of the model.
+    usage: net.apply(regularizer_orth)
+    ----------------------------------------
+
+    Args:
+        m (module): pytorch module
     """
+
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
         w = m.weight.data.clone()
@@ -41,19 +34,22 @@ def regularizer_orth(m):
         pass
 
 
-# --------------------------------------------
-# SVD Orthogonal Regularization
-# --------------------------------------------
 def regularizer_orth2(m):
     """
-    # ----------------------------------------
-    # Applies regularization to the training by performing the
-    # orthogonalization technique described in the paper
-    # This function is to be called by the torch.nn.Module.apply() method,
-    # which applies svd_orthogonalization() to every layer of the model.
-    # usage: net.apply(regularizer_orth2)
-    # ----------------------------------------
+    ----------------------------------------
+    SVD Orthogonal Regularization
+    ----------------------------------------
+    Applies regularization to the training by performing the
+    orthogonalization technique described in the paper
+    This function is to be called by the torch.nn.Module.apply() method,
+    which applies svd_orthogonalization() to every layer of the model.
+    usage: net.apply(regularizer_orth)
+    ----------------------------------------
+
+    Args:
+        m (module): pytorch module
     """
+
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
         w = m.weight.data.clone()
@@ -71,10 +67,10 @@ def regularizer_orth2(m):
 
 
 def regularizer_clip(m):
-    """
-    # ----------------------------------------
-    # usage: net.apply(regularizer_clip)
-    # ----------------------------------------
+    """usage: net.apply(regularizer_clip)
+
+    Args:
+        m (module): pytorch module
     """
     eps = 1e-4
     c_min = -1.5
@@ -92,13 +88,3 @@ def regularizer_clip(m):
             b[b > c_max] -= eps
             b[b < c_min] += eps
             m.bias.data = b
-
-
-#    elif classname.find('BatchNorm2d') != -1:
-#
-#       rv = m.running_var.data.clone()
-#       rm = m.running_mean.data.clone()
-#
-#        if m.affine:
-#            m.weight.data
-#            m.bias.data
