@@ -1,2 +1,5 @@
 data/data_files/*
 *.pyc
+trained_models/*
+!trained_models/README.md
+src/tensorboard/*
