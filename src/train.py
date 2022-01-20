@@ -90,7 +90,7 @@ def main(cfg, path_to_config):
             device,
             cfg["TRAIN"]["LOSS"]["WEIGHT"],
         )
-        valid_loss, restored_images, target_restored_images = valid_one_epoch(
+        valid_loss, psnr, restored_images, target_restored_images = valid_one_epoch(
             model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
         )
 
@@ -106,6 +106,7 @@ def main(cfg, path_to_config):
         # Track performances with tensorboard
         tensorboard_writer.add_scalar("training_loss", training_loss, epoch)
         tensorboard_writer.add_scalar("valid_loss", valid_loss, epoch)
+        tensorboard_writer.add_scalar("psnr", psnr, epoch)
         tensorboard_writer.add_scalar("lr", learning_rate, epoch)
 
         # Save images in tensorboard
