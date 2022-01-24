@@ -1,6 +1,7 @@
 import os
 import torch
 import torch.nn as nn
+import numpy as np
 
 from models.SwinTransformer import SwinIR
 from tools.SSIMLoss import SSIMLoss
@@ -31,7 +32,7 @@ class ModelCheckpoint:
             torch.save(self.model.state_dict(), self.best_model_filepath)
             self.min_loss = loss
 
-        if epoch in numpy.arange(
+        if epoch in np.arange(
             self.checkpoint_step - 1, self.epochs, self.checkpoint_step
         ):
 

@@ -17,7 +17,7 @@ def tensor2uint(img):
     img = img.data.squeeze(axis=1).float().clamp_(0, 1).cpu().numpy()
     if img.ndim == 3:
         img = np.transpose(img, (0, 2, 1))
-    return np.uint8((img*255.0).round())
+    return np.uint8((img * 255.0).round())
 
 
 def calculate_psnr(img1, img2, border=0):
@@ -37,16 +37,16 @@ def calculate_psnr(img1, img2, border=0):
     # img1 and img2 have range [0, 255]
 
     if not img1.shape == img2.shape:
-        raise ValueError('Input images must have the same dimensions.')
+        raise ValueError("Input images must have the same dimensions.")
     h, w = img1.shape[1:]
-    img1 = img1[:,border:h-border, border:w-border]
-    img2 = img2[:,border:h-border, border:w-border]
+    img1 = img1[:, border : h - border, border : w - border]
+    img2 = img2[:, border : h - border, border : w - border]
 
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
-    mse = np.mean((img1 - img2)**2,axis=(1,2))
-    mse[mse == 0] = float('inf')
-    return np.means(20 * np.log10(255.0 / np.sqrt(mse))))
+    mse = np.mean((img1 - img2) ** 2, axis=(1, 2))
+    mse[mse == 0] = float("inf")
+    return np.mean(20 * np.log10(255.0 / np.sqrt(mse)))
 
 
 def valid_one_epoch(model, loader, f_loss, device, loss_weight):
@@ -84,19 +84,23 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
             pred = tensor2uint(outputs)
             target = tensor2uint(high)
 
-            psnr = calculate_psnr(pred,target)
+            psnr = calculate_psnr(pred, target)
             avg_psnr += psnr
 
             # Return 5 random reconstructed images
             count = 0
             previous_idx = []
-            while count < 5:
-                idx = random.randint(0, outputs.shape[0])
+            while count < 2:
+                idx = random.randint(0, outputs.shape[0] - 1)
                 if idx not in previous_idx:
                     restored_images.append(outputs[idx])
-                    target_restored_images(high[idx])
+                    target_restored_images.append(high[idx])
                     count += 1
                     previous_idx.append(idx)
 
-
-        return tot_loss / n_samples, psnr / n_samples, restored_images, target_restored_images
+        return (
+            tot_loss / n_samples,
+            psnr / n_samples,
+            restored_images,
+            target_restored_images,
+        )

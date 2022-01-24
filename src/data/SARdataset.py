@@ -18,20 +18,29 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object
     """
 
-    def __init__(self, root):
+    def __init__(self, root, test=False):
         """
         Args:
             root (str): absolute path of the data files
             image_type (str): type of bandwith used for SAR images. Defaults to 'HH'.
             preprocessing (str): type of preprocessing to perform. Can be either 'padding', 'hanning' or None. Defaults to 'None'.
         """
-
+        self.test = test
         self.root = root
-        self.files_names = [
-            f
-            for f in os.listdir(os.path.join(self.root, "high_resolution"))
-            if os.path.isfile(os.path.join(self.root, "high_resolution", f))
-        ]
+
+        if self.test:
+            self.files_names = [
+                os.path.join(self.root, f)
+                for f in os.listdir(self.root)
+                if os.path.isfile(os.path.join(self.root, f))
+            ]
+
+        else:
+            self.files_names = [
+                f
+                for f in os.listdir(os.path.join(self.root, "high_resolution"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+            ]
 
     def __getitem__(self, idx):
         """Retrieve the i-th item of the dataset
@@ -42,20 +51,34 @@ class SARdataset(Dataset):
         Returns:
             image_input, image_target: the low resolution image and the high resolution image
         """
-        image_input = apply_processing(
-            np.load(os.path.join(self.root, "low_resolution", self.files_names[idx]))
-        )
-        image_target = apply_processing(
-            np.load(os.path.join(self.root, "high_resolution", self.files_names[idx]))
-        )
 
-        # Perform augmentation on images
-        mode = random.randint(0, 7)
+        if self.test:
+            return (
+                Image.fromarray(
+                    np.uint8(apply_processing(np.load(self.files_names[idx])))
+                ),
+                self.files_names[idx].split("/")[-1],
+            )
 
-        return (
-            Image.fromarray(np.uint8(augment_img(image_input, mode=mode))),
-            Image.fromarray(np.uint8(augment_img(image_target, mode=mode))),
-        )
+        else:
+            image_input = apply_processing(
+                np.load(
+                    os.path.join(self.root, "low_resolution", self.files_names[idx])
+                )
+            )
+            image_target = apply_processing(
+                np.load(
+                    os.path.join(self.root, "high_resolution", self.files_names[idx])
+                )
+            )
+
+            # Perform augmentation on images
+            mode = random.randint(0, 7)
+
+            return (
+                Image.fromarray(np.uint8(augment_img(image_input, mode=mode))),
+                Image.fromarray(np.uint8(augment_img(image_target, mode=mode))),
+            )
 
     def __len__(self):
         """Operator len that returns the size of the dataset

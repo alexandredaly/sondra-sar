@@ -8,19 +8,23 @@ class DatasetTransformer(torch.utils.data.Dataset):
     """Apply transformation to a torch Dataset
     """
 
-    def __init__(self, base_dataset, transform):
+    def __init__(self, base_dataset, transform, test=False):
         """Initialize DatasetTransformer class
 
         Args:
             base_dataset (torchvision.datasets.folder.ImageFolder): Image dataset
             transform (torchvision.transforms.Compose): List of transformation to apply
         """
+        self.test = test
         self.base_dataset = base_dataset
         self.transform = transform
 
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
-        return self.transform(img), self.transform(target)
+        if self.test:
+            return self.transform(img), target
+        else:
+            return self.transform(img), self.transform(target)
 
     def __len__(self):
         return len(self.base_dataset)
@@ -43,11 +47,14 @@ def create_dataset(cfg):
     train_valid_dataset = SARdataset(cfg["TRAIN_DATA_DIR"])
 
     # Split it into training and validation sets
-    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
+    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset))
+    print(nb_train)
     nb_valid = int(valid_ratio * len(train_valid_dataset))
+    print(nb_valid)
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
         train_valid_dataset, [nb_train, nb_valid]
     )
+    print(nb_valid)
 
     # Apply transforms (unsqueez dim 1 and convert to tensor)
     train_dataset = DatasetTransformer(
@@ -96,7 +103,7 @@ def create_dataloader(cfg, train_dataset, valid_dataset):
     return train_loader, valid_loader
 
 
-def main(cfg):
+def load_train(cfg):
     """Main fonction of the loader. Last step concerning the data processing
 
     Args:
@@ -125,3 +132,36 @@ def main(cfg):
     )
 
     return train_loader, valid_loader
+
+
+def load_test(cfg):
+    """Loads testing images
+
+    Args:
+        cfg (dict): config file
+
+    Returns :
+        Tensor of images
+    """
+
+    # Init test dataset
+    test_data = SARdataset(cfg["INFERENCE"]["PATH_TO_IMAGES"], test=True)
+
+    # Apply transforms
+    test_dataset = DatasetTransformer(
+        test_data,
+        transforms.Compose(
+            [transforms.Grayscale(num_output_channels=1), transforms.ToTensor()]
+        ),
+        test=True,
+    )
+
+    # Build Loader
+    test_loader = torch.utils.data.DataLoader(
+        dataset=test_dataset,
+        batch_size=cfg["INFERENCE"]["BATCH_SIZE"],
+        shuffle=False,
+        num_workers=cfg["DATASET"]["NUM_THREADS"],
+    )
+
+    return test_loader
