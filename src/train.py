@@ -42,7 +42,7 @@ def main(cfg, path_to_config):
     # TODO: Check what is depths and HEAD in SwinTransformers
 
     # Load data
-    train_loader, valid_loader = loader.main(cfg=cfg)
+    train_loader, valid_loader = loader.load_train(cfg=cfg)
 
     # Define device
     if torch.cuda.is_available():
@@ -120,7 +120,7 @@ def main(cfg, path_to_config):
         scheduler.step()
 
         # Save best model
-        checkpoint.update(val_loss, epoch)
+        checkpoint.update(valid_loss, epoch)
 
         # Get current learning rate
         learning_rate = scheduler.optimizer.param_groups[0]["lr"]
