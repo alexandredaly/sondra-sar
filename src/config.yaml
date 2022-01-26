@@ -1,4 +1,4 @@
-RAW_DATA_DIR: './data_files/raw_data/SSurge_12600_14170_008_141120_L090HH_01_BC_s1_1x1'
+RAW_DATA_DIR: '../data/data_files/raw_data'
 TRAIN_DATA_DIR: '../data/data_files/train'
 DATASET:
   POLARISATION: ['HH']
