@@ -1,3 +1,5 @@
+"This module aims at reading SLC SAR data and process them"
+# pylint: disable=invalid-name
 ##############################################################################
 # Some data reading functions
 # Authored by Ammar Mian, 09/11/2018
@@ -19,18 +21,15 @@
 # limitations under the License.
 ##############################################################################
 
+import os
+import fnmatch
 import numpy as np
-import os, fnmatch
 import matplotlib.pyplot as plt
-import matplotlib
-import cv2
 
 # Need to install scikit-image to use the following modules
-from skimage import data, img_as_float
+from skimage import img_as_float
 from skimage import exposure
 from skimage.filters import window
-
-from matplotlib.colors import Normalize
 
 
 class Uavsar_slc_stack_1x1:
@@ -83,7 +82,7 @@ class Uavsar_slc_stack_1x1:
                         for line in f:  # Iterate on each line
                             # Discard commented lines
                             line = line.strip().split(";")[0]
-                            if not (line == ""):
+                            if not line == "":
                                 category = " ".join(
                                     line.split()[: line.split().index("=") - 1]
                                 )
@@ -93,8 +92,15 @@ class Uavsar_slc_stack_1x1:
                                 self.meta_data[entry.split(".")[0]][category] = value
 
     def read_subband_header(self, seg, crop, file_name, meta_identifier):
+        """Read characteristics for subband processing
 
-        # Read characteristics for subband processing
+
+        Args:
+            seg (int): the number of the segment to read
+            crop (int, list): the cropping parameters
+            file_name (string): name of the current read file
+            meta_identifier (string): the name of all segments
+        """
 
         self.subband_header[file_name] = {}
         self.subband_header[file_name]["AzPixelSz"] = float(
@@ -121,38 +127,7 @@ class Uavsar_slc_stack_1x1:
         else:
             self.subband_header[file_name]["Crop"] = None
 
-    def construct_cropped_image_from_slc(self, shape, crop, data_path):
-        """Return the cropped portion of an SLC image as a numpy array.
-        Args:
-            shape (np.array): the shape of the SAR image (azimut, range)
-            crop (list): the size of the crop. [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1]
-            data_path (string): path to load the slc file
-
-        Returns:
-            np.array: portion of the image as a numpy array
-        """
-
-        temp_array = np.zeros(
-            (crop[1] - crop[0], crop[3] - crop[2]), dtype=np.complex64
-        )
-        with open(data_path, "rb") as f:
-            f.seek((crop[0] * shape[1] + crop[2]) * 8, os.SEEK_SET)
-            for row in range(crop[1] - crop[0]):
-                temp_array[row, :] = np.fromfile(
-                    f, dtype=np.complex64, count=crop[3] - crop[2]
-                )
-                f.seek(((crop[0] + row) * shape[1] + crop[2]) * 8, os.SEEK_SET)
-
-        return temp_array
-
-    def read_data(
-        self,
-        meta_identifier,
-        segment=list(range(1, 8)),
-        crop=None,
-        save=True,
-        save_dir="./",
-    ):
+    def read_data(self, meta_identifier, segment=list(range(1, 8)), crop=None):
         """A method to read UAVSAR SLC 1x1 data stack
 
         Args:
@@ -223,7 +198,7 @@ class Uavsar_slc_stack_1x1:
                                 previous_l = l
 
                         # If crop is none, read the entire image
-                        elif isinstance(crop, None):
+                        else:
                             temp_array = np.fromfile(
                                 data_path, dtype=np.complex64
                             ).reshape(shape)
@@ -233,6 +208,12 @@ class Uavsar_slc_stack_1x1:
                 break
 
     def plot_amp_img(self, cplx_image):
+        """This method plots the magnitude of the images
+
+        Args:
+            cplx_image (np.array): a complex image
+        """
+
         plt.figure()
         plt.imshow(
             20 * np.log10(np.abs(cplx_image) + 1e-15),
@@ -283,7 +264,7 @@ class Uavsar_slc_stack_1x1:
         # plt.show()
 
     def plot_mlpls_img(
-        self, method="equal", all=False, crop=None, bins=256, savefig=False
+        self, method="equal", bins=256, all=False, crop=None, savefig=False
     ):
         """ A method to plot multiples UAVSAR SLC 1x1 data
             Inputs:
@@ -320,8 +301,6 @@ class Uavsar_slc_stack_1x1:
                 *
         """
 
-        RgPixelSz = self.subband_header[identifier]["RgPixelSz"]
-        AzPixelSz = self.subband_header[identifier]["AzPixelSz"]
         RgCnt = self.subband_header[identifier]["RgCnt"]
         AzCnt = self.subband_header[identifier]["AzCnt"]
         crop = self.subband_header[identifier]["Crop"]
@@ -336,10 +315,10 @@ class Uavsar_slc_stack_1x1:
         elif isinstance(crop, int):
             RgCnt, AzCnt = crop, crop  # Update the Azimuth & Range count if crop
 
-        SarRange = RgPixelSz * np.arange(
+        SarRange = self.subband_header[identifier]["RgPixelSz"] * np.arange(
             -RgCnt / 2, RgCnt / 2
         )  # radial axis (x axis / axis 1 in the image)
-        SarAzimuth = AzPixelSz * np.arange(
+        SarAzimuth = self.subband_header[identifier]["AzPixelSz"] * np.arange(
             -AzCnt / 2, AzCnt / 2
         )  # azimuth axis (y axis /axis 0 in the image)
 
@@ -359,12 +338,12 @@ class Uavsar_slc_stack_1x1:
         # kudop = fdop / vavion;
         # kudopcentral = kcentral * np.sin(deport)
 
-        krange = kcentral * np.cos(deport) + (1 / RgPixelSz) * np.arange(
-            -1 / 2, 1 / 2, 1 / RgCnt
-        )
-        kazimuth = kcentral * np.sin(deport) + (1 / AzPixelSz) * np.arange(
-            -1 / 2, 1 / 2, 1 / AzCnt
-        )
+        krange = kcentral * np.cos(deport) + (
+            1 / self.subband_header[identifier]["RgPixelSz"]
+        ) * np.arange(-1 / 2, 1 / 2, 1 / RgCnt)
+        kazimuth = kcentral * np.sin(deport) + (
+            1 / self.subband_header[identifier]["AzPixelSz"]
+        ) * np.arange(-1 / 2, 1 / 2, 1 / AzCnt)
 
         # Filtering in frequency -> sub band and Aperture -> theta
         # fcos(theta) = krange & fsin(theta) = kazimuth
@@ -411,7 +390,7 @@ class Uavsar_slc_stack_1x1:
 
             if decimation:
                 # Décimation par 2 de chaque dim, crop central
-                div = downscale_factor // 2
+                div = downscale_factor * 2
                 sub_spectre = sub_spectre[
                     sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
                     sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
@@ -438,3 +417,27 @@ class Uavsar_slc_stack_1x1:
             else:
                 self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
                 del sub_spectre
+
+    def construct_cropped_image_from_slc(self, shape, crop, data_path):
+        """Return the cropped portion of an SLC image as a numpy array.
+        Args:
+            shape (np.array): the shape of the SAR image (azimut, range)
+            crop (list): the size of the crop. [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1]
+            data_path (string): path to load the slc file
+
+        Returns:
+            np.array: portion of the image as a numpy array
+        """
+
+        temp_array = np.zeros(
+            (crop[1] - crop[0], crop[3] - crop[2]), dtype=np.complex64
+        )
+        with open(data_path, "rb") as f:
+            f.seek((crop[0] * shape[1] + crop[2]) * 8, os.SEEK_SET)
+            for row in range(crop[1] - crop[0]):
+                temp_array[row, :] = np.fromfile(
+                    f, dtype=np.complex64, count=crop[3] - crop[2]
+                )
+                f.seek(((crop[0] + row) * shape[1] + crop[2]) * 8, os.SEEK_SET)
+
+        return temp_array
