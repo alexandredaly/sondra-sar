@@ -416,6 +416,12 @@ class Uavsar_slc_stack_1x1:
 
             else:
                 self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
+                np.save(
+                    "./data_files/train/low_resolution/{}_{}.npy".format(
+                        identifier[:-4], i
+                    ),
+                    np.fft.ifft2(sub_spectre),
+                )
                 del sub_spectre
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
