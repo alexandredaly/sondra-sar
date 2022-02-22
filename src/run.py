@@ -4,16 +4,15 @@ import os
 import subprocess
 
 
-def makejob(commit_id, config_name, nruns):
+def makejob(commit_id, config_name):
     return f"""#!/bin/bash
 
 #SBATCH --job-name=Sondra-{config_name}
 #SBATCH --nodes=1
 #SBATCH --partition=gpu_prod_night
-#SBATCH --time=1:00:00
+#SBATCH --time=1-01:00:00
 #SBATCH --output=logslurms/slurm-%A_%a.out
 #SBATCH --error=logslurms/slurm-%A_%a.err
-#SBATCH --array=0-{nruns}
 
 current_dir=`pwd`
 
@@ -72,3 +71,5 @@ commit_id = subprocess.check_output(
 
 # Ensure the log directory exists
 os.system("mkdir -p logslurms")
+
+makejob(commit_id, config_name)
