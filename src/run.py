@@ -72,4 +72,4 @@ commit_id = subprocess.check_output(
 # Ensure the log directory exists
 os.system("mkdir -p logslurms")
 
-makejob(commit_id, config_name)
+makejob(commit_id, "./config.yaml")
