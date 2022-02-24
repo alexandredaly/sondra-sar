@@ -21,6 +21,28 @@ from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
 from tools.regularizers import regularizer_orth2, regularizer_clip
 
+import neptune.new as neptune
+
+# Step 1: Initialize Neptune and create new Neptune Run
+project = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
+                               api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
+
+params = {"im_size": cfg["DATASET"]["IMAGE_SIZE"],
+          "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
+          "batch_size": cfg["DATASET"]["BATCH_SIZE"],
+          "loss": cfg["TRAIN"]["LOSS"]["NAME"],
+          "optimizer": cfg["TRAIN"]["OPTIMIZER"]["NAME"],
+          "lr": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["LR_INITIAL"],
+          "weight_decay": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["WEIGHT_DECAY"],
+          "pretrained": cfg["TRAIN"]["PRETRAINED"]["BOOL"],
+          "epochs": cfg["TRAIN"]["EPOCH"]
+          }
+
+# Log Neptune config & pararameters
+run["algorithm"] = cfg["MODEL"]["NAME"].lower()
+run["config/dataset/path"] = cfg["TRAIN_DATA_DIR"]
+run["config/params"] = params
+
 
 def main(cfg, path_to_config):
     """Main pipeline to train a model
@@ -137,6 +159,16 @@ def main(cfg, path_to_config):
 
         tensorboard_writer.add_image("Restored images", restored_img_grid)
         tensorboard_writer.add_image("Target Restored images", target_restored_img_grid)
+
+        # Log Neptune losses, psnr and lr
+        run["logs/training/batch/training_loss"].log(training_loss)
+        run["logs/training/batch/valid_loss"].log(valid_loss)
+        run["logs/training/batch/psnr"].log(psnr)
+        run["logs/training/batch/learning_rate"].log(learning_rate)
+
+    # Stop Neptune logging
+    run.stop()
+
 
 
 if __name__ == "__main__":
