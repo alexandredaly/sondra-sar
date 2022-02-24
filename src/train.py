@@ -28,22 +28,6 @@ import neptune.new as neptune
 run = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
                            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
 
-params = {"im_size": cfg["DATASET"]["IMAGE_SIZE"],
-          "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
-          "batch_size": cfg["DATASET"]["BATCH_SIZE"],
-          "loss": cfg["TRAIN"]["LOSS"]["NAME"],
-          "optimizer": cfg["TRAIN"]["OPTIMIZER"]["NAME"],
-          "lr": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["LR_INITIAL"],
-          "weight_decay": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["WEIGHT_DECAY"],
-          "pretrained": cfg["TRAIN"]["PRETRAINED"]["BOOL"],
-          "epochs": cfg["TRAIN"]["EPOCH"]
-          }
-
-# Log Neptune config & pararameters
-run["algorithm"] = cfg["MODEL"]["NAME"].lower()
-run["config/dataset/path"] = cfg["TRAIN_DATA_DIR"]
-run["config/params"] = params
-
 
 def main(cfg, path_to_config):
     """Main pipeline to train a model
@@ -63,6 +47,23 @@ def main(cfg, path_to_config):
     # (int: it is not the input image size because we can feed images of different size than im_size)
 
     # TODO: Check what is depths and HEAD in SwinTransformers
+
+    # Log Neptune config & pararameters
+    params = {"im_size": cfg["DATASET"]["IMAGE_SIZE"],
+            "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
+            "batch_size": cfg["DATASET"]["BATCH_SIZE"],
+            "loss": cfg["TRAIN"]["LOSS"]["NAME"],
+            "optimizer": cfg["TRAIN"]["OPTIMIZER"]["NAME"],
+            "lr": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["LR_INITIAL"],
+            "weight_decay": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["WEIGHT_DECAY"],
+            "pretrained": cfg["TRAIN"]["PRETRAINED"]["BOOL"],
+            "epochs": cfg["TRAIN"]["EPOCH"]
+            }
+
+    
+    run["algorithm"] = cfg["MODEL"]["NAME"].lower()
+    run["config/dataset/path"] = cfg["TRAIN_DATA_DIR"]
+    run["config/params"] = params
 
     # Load data
     train_loader, valid_loader = loader.load_train(cfg=cfg)
