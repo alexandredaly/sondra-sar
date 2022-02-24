@@ -171,8 +171,8 @@ def main(cfg, path_to_config):
 
 if __name__ == "__main__":
     # Initialize Neptune and create new Neptune Run
-    run = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
-                            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
+    run = neptune.init(name="youssefadarrab/Sondra-SAR", 
+                            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==",)
 
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
