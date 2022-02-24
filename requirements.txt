@@ -6,5 +6,4 @@ torch==1.9.0
 tensorboard
 matplotlib
 neptune-client
-numpy
 torchvision==0.10.0
