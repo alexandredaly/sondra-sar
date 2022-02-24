@@ -1,8 +1,9 @@
-numpy 
+numpy==1.21.0
 scikit-image
 timm
 pyyaml > 5.1
-torch > 1.6
+torch==1.9.0
 tensorboard
 matplotlib
 neptune-client
+torchvision==0.10.0
