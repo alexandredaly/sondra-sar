@@ -23,9 +23,10 @@ from tools.regularizers import regularizer_orth2, regularizer_clip
 
 import neptune.new as neptune
 
-# Step 1: Initialize Neptune and create new Neptune Run
-project = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
-                               api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
+
+# Initialize Neptune and create new Neptune Run
+run = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
+                           api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
 
 params = {"im_size": cfg["DATASET"]["IMAGE_SIZE"],
           "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
