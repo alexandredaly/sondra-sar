@@ -24,10 +24,6 @@ from tools.regularizers import regularizer_orth2, regularizer_clip
 import neptune.new as neptune
 
 
-# Initialize Neptune and create new Neptune Run
-run = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
-                           api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
-
 
 def main(cfg, path_to_config):
     """Main pipeline to train a model
@@ -174,6 +170,10 @@ def main(cfg, path_to_config):
 
 
 if __name__ == "__main__":
+    # Initialize Neptune and create new Neptune Run
+    run = neptune.init_project(name="youssefadarrab/Sondra-SAR", 
+                            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==")
+
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
