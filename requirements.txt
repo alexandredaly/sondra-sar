@@ -7,4 +7,4 @@ tensorboard
 matplotlib
 neptune-client
 torchvision==0.10.0
-pyyaml
+
