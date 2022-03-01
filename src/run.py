@@ -24,7 +24,6 @@ mkdir $TMPDIR/sondra-sar
 rsync -r . $TMPDIR/sondra-sar/
 
 cd $TMPDIR/sondra-sar/
-git checkout {commit_id}
 
 echo "Installing Virtual Env with the requirements"
 python3 -m pip install virtualenv --user
