@@ -99,7 +99,11 @@ def apply_processing(data):
         img (np.array): the processed image
     """
 
-    img = np.log10(np.abs(data) + 1e-8)
+    img = 20 * np.log10(np.abs(data) + 1e-15) 
+    img -= img.max()  # max -> 0dB , min -> min - max
+    #TODO : calculer le max sur toutes les imagettes du train dataset
+    #       à stocker aussi pour réappliquer ensuite(e.g. sur le valid set)
+    img = np.clip(img, -60, 0)
     return img
 
 
