@@ -34,7 +34,7 @@ def calculate_psnr(img1, img2, border=0):
     Returns:
         [type]: [description]
     """
-    # img1 and img2 have range [0, 255]
+    # img1 and img2 have range [-60, 0]
 
     if not img1.shape == img2.shape:
         raise ValueError("Input images must have the same dimensions.")
@@ -46,7 +46,8 @@ def calculate_psnr(img1, img2, border=0):
     img2 = img2.astype(np.float64)
     mse = np.mean((img1 - img2) ** 2, axis=(1, 2))
     mse[mse == 0] = float("inf")
-    return np.mean(20 * np.log10(255.0 / np.sqrt(mse)))
+    #TODO factor the min clip value from the data set
+    return np.mean(10 * np.log10(60**2 / mse))
 
 
 def valid_one_epoch(model, loader, f_loss, device, loss_weight):
