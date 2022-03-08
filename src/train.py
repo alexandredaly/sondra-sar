@@ -24,7 +24,6 @@ from tools.regularizers import regularizer_orth2, regularizer_clip
 import neptune.new as neptune
 
 
-
 def main(cfg, path_to_config):
     """Main pipeline to train a model
 
@@ -155,6 +154,7 @@ def main(cfg, path_to_config):
         restored_img_grid = make_grid(restored_images)
         target_restored_img_grid = make_grid(target_restored_images)
 
+        
         tensorboard_writer.add_image("Restored images", restored_img_grid)
         tensorboard_writer.add_image("Target Restored images", target_restored_img_grid)
 
@@ -170,10 +170,9 @@ def main(cfg, path_to_config):
 
 
 if __name__ == "__main__":
-    # Initialize Neptune and create new Neptune Run
-    run = neptune.init(name="youssefadarrab/Sondra-SAR", 
-                       api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==",
-    )
+
+    run = neptune.init(project_qualified_name="Sondra-SAR", 
+                       api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==",)
 
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
