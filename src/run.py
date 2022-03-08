@@ -34,7 +34,7 @@ echo "Installation finished"
 
 
 echo "Training"
-python3 train.py --path_to_config {config_name}
+python3 src/train.py --path_to_config {config_name}
 
 # Once the job is finished, you can copy back back
 # files from $TMPDIR/sondra-sar to $current_dir
