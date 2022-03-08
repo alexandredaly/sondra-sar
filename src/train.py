@@ -21,7 +21,7 @@ from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
 from tools.regularizers import regularizer_orth2, regularizer_clip
 
-import neptune
+import neptune.new as neptune
 
 
 def main(cfg, path_to_config):
@@ -171,7 +171,7 @@ def main(cfg, path_to_config):
 
 if __name__ == "__main__":
 
-    run = neptune.init(project_qualified_name="Sondra-SAR", 
+    run = neptune.init(project="Sondra-SAR", 
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==",)
 
     # Init the parser
