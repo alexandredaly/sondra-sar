@@ -21,7 +21,7 @@ from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
 from tools.regularizers import regularizer_orth2, regularizer_clip
 
-import neptune.new as neptune
+import neptune
 
 
 def main(cfg, path_to_config):
