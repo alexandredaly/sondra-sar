@@ -45,11 +45,13 @@ def create_dataset(cfg):
 
     # Get the dataset for the training/validation sets
     train_valid_dataset = SARdataset(cfg["TRAIN_DATA_DIR"])
+    # Store max value of preprocessed dataset in max attribute  of SARDataset
+    train_valid_dataset.compute_max_dataset()
     print(len(train_valid_dataset))
-    print((1.0 - valid_ratio) * len(train_valid_dataset),"nb_train")
-    print(valid_ratio* len(train_valid_dataset),"nb_valid")
+    print((1.0 - valid_ratio) * len(train_valid_dataset), "nb_train")
+    print(valid_ratio * len(train_valid_dataset), "nb_valid")
     # Split it into training and validation sets
-    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset))+1
+    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
     print(nb_train)
     nb_valid = int(valid_ratio * len(train_valid_dataset))
     print(nb_valid)
