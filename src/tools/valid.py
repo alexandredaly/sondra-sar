@@ -68,8 +68,8 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
 
         n_samples = 0
         tot_loss = 0.0
-        restored_images = []
-        target_images = []
+        restored_images = None
+        target_images = None
         avg_psnr = 0
 
         for low, high in tqdm.tqdm(loader):
@@ -89,12 +89,12 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
             avg_psnr += psnr
 
             # Return reconstructed images
-            restored_images.append(outputs[0])
-            target_images.append(high[0])
+
 
         return (
             tot_loss / n_samples,
             psnr / n_samples,
-            restored_images,
-            target_images,
+            tensor2uint(low[0]),
+            pred[0],
+            target[0],
         )

@@ -815,7 +815,7 @@ class SwinIR(nn.Module):
         patch_norm=True,
         use_checkpoint=False,
         upscale=2,
-        img_range=1.0,
+        img_range=255.,
         upsampler="",
         resi_connection="1conv",
         **kwargs,

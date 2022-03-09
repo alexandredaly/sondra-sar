@@ -37,8 +37,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+                for f in os.listdir(os.path.join(self.root, "high_resolution_small"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution_small", f))
             ]
 
     def __getitem__(self, idx):
@@ -62,11 +62,11 @@ class SARdataset(Dataset):
         else:
             image_input = apply_processing(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "low_resolution_small", self.files_names[idx]))
             )
             image_target = apply_processing(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "high_resolution_small", self.files_names[idx]))
             )
 
             # Perform augmentation on images
@@ -162,3 +162,8 @@ def augment_img(img, mode=0):
         return np.rot90(img, k=2).copy()
     elif mode == 7:
         return np.flipud(np.rot90(img, k=3)).copy()
+
+def equalize(image):
+    p2, p98 = np.percentile(image, (2, 98))
+    img = exposure.rescale_intensity(image, in_range=(p2, p98))
+    return img

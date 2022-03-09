@@ -20,9 +20,10 @@ from tools.train_utils import (
 from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
 from tools.regularizers import regularizer_orth2, regularizer_clip
+from data.SARdataset import equalize
 
 import neptune.new as neptune
-
+from neptune.new.types import File
 
 def main(cfg, path_to_config):
     """Main pipeline to train a model
@@ -131,7 +132,7 @@ def main(cfg, path_to_config):
             model.apply(regularizer_clip)
 
         # Validation
-        valid_loss, psnr, restored_images, target_images = valid_one_epoch(
+        valid_loss, psnr, input_image, restored_images, target_images = valid_one_epoch(
             model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
         )
 
@@ -144,27 +145,18 @@ def main(cfg, path_to_config):
         # Get current learning rate
         learning_rate = scheduler.optimizer.param_groups[0]["lr"]
 
-        # Track performances with tensorboard
-        tensorboard_writer.add_scalar("training_loss", training_loss, epoch)
-        tensorboard_writer.add_scalar("valid_loss", valid_loss, epoch)
-        tensorboard_writer.add_scalar("psnr", psnr, epoch)
-        tensorboard_writer.add_scalar("lr", learning_rate, epoch)
-
-        # Save images in tensorboard
-        restored_img_grid = make_grid(restored_images)
-        target_img_grid = make_grid(target_images)
-
-        
-        tensorboard_writer.add_image("Restored images", restored_img_grid)
-        tensorboard_writer.add_image("Target Restored images", target_img_grid)
+        print(input_image)
+        print(restored_images)
+        print(target_images)
 
         # Log Neptune losses, psnr and lr
         run["logs/training/batch/training_loss"].log(training_loss)
         run["logs/training/batch/valid_loss"].log(valid_loss)
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
-        run["logs/valid/batch/Restored_images"].log_image(restored_img_grid)
-        run["logs/valid/batch/Target_images"].log_image(target_img_grid)
+        run["logs/valid/batch/Input_image"].log(File.as_image(equalize(input_image.squeeze()/255)))
+        run["logs/valid/batch/Restored_image"].log(File.as_image(equalize(restored_images/255)))
+        run["logs/valid/batch/Target_image"].log(File.as_image(equalize(target_images/255)))
 
     # Stop Neptune logging
     run.stop()
