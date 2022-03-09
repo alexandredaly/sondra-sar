@@ -26,7 +26,6 @@ class SARdataset(Dataset):
         """
         self.test = test
         self.root = root
-        self.max = None
 
         if self.test:
             self.files_names = [
@@ -55,7 +54,7 @@ class SARdataset(Dataset):
         if self.test:
             return (
                 Image.fromarray(
-                    np.uint8(apply_processing(np.load(self.files_names[idx])), self.max)
+                    np.uint8(apply_processing(np.load(self.files_names[idx])))
                 ),
                 self.files_names[idx].split("/")[-1],
             )
@@ -63,15 +62,11 @@ class SARdataset(Dataset):
         else:
             image_input = apply_processing(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]),
-                    self.max,
-                )
+                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
             )
             image_target = apply_processing(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]),
-                    self.max,
-                )
+                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
             )
 
             # Perform augmentation on images
@@ -90,32 +85,6 @@ class SARdataset(Dataset):
         """
         return len(self.files_names)
 
-    def compute_max_dataset(self):
-        """compute the maximum pixel value over all pre-preprocessed dataset and stores it in self.max attribute
-
-        Args:
-            loader (torc loader): Dataloader associated to dataset with preprocessing
-
-        Return:
-            None
-        """
-        maxi = None
-        for idx in range(self.__len__):
-            image_input = apply_processing(
-                np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx])
-                )
-            )
-            image_target = apply_processing(
-                np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx])
-                )
-            )
-            value = max(image_input.max(), image_target.max())
-            if value > maxi or maxi == None:
-                maxi = value
-            self.max = maxi
-
 
 def apply_processing(data, maxi=None):
     """A function to have the images in log mode
@@ -128,11 +97,6 @@ def apply_processing(data, maxi=None):
     """
 
     img = 20 * np.log10(np.abs(data) + 1e-15)
-    if maxi == None:
-        img -= img.max()
-    else:
-        img -= maxi
-
     img = np.clip(img, -60, 0)
     return img
 

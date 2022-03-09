@@ -131,7 +131,7 @@ def main(cfg, path_to_config):
             model.apply(regularizer_clip)
 
         # Validation
-        valid_loss, psnr, restored_images, target_restored_images = valid_one_epoch(
+        valid_loss, psnr, restored_images, target_images = valid_one_epoch(
             model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
         )
 
@@ -152,17 +152,19 @@ def main(cfg, path_to_config):
 
         # Save images in tensorboard
         restored_img_grid = make_grid(restored_images)
-        target_restored_img_grid = make_grid(target_restored_images)
+        target_img_grid = make_grid(target_images)
 
         
         tensorboard_writer.add_image("Restored images", restored_img_grid)
-        tensorboard_writer.add_image("Target Restored images", target_restored_img_grid)
+        tensorboard_writer.add_image("Target Restored images", target_img_grid)
 
         # Log Neptune losses, psnr and lr
         run["logs/training/batch/training_loss"].log(training_loss)
         run["logs/training/batch/valid_loss"].log(valid_loss)
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
+        run["logs/valid/batch/Restored_images"].log_image(restored_img_grid)
+        run["logs/valid/batch/Target_images"].log_image(target_img_grid)
 
     # Stop Neptune logging
     run.stop()

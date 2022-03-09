@@ -69,7 +69,7 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
         n_samples = 0
         tot_loss = 0.0
         restored_images = []
-        target_restored_images = []
+        target_images = []
         avg_psnr = 0
 
         for low, high in tqdm.tqdm(loader):
@@ -88,20 +88,13 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
             psnr = calculate_psnr(pred, target)
             avg_psnr += psnr
 
-            # Return 5 random reconstructed images
-            count = 0
-            previous_idx = []
-            while count < 2:
-                idx = random.randint(0, outputs.shape[0] - 1)
-                if idx not in previous_idx:
-                    restored_images.append(outputs[idx])
-                    target_restored_images.append(high[idx])
-                    count += 1
-                    previous_idx.append(idx)
+            # Return reconstructed images
+            restored_images.append(outputs[0])
+            target_images.append(high[0])
 
         return (
             tot_loss / n_samples,
             psnr / n_samples,
             restored_images,
-            target_restored_images,
+            target_images,
         )
