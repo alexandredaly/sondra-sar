@@ -46,7 +46,6 @@ class Uavsar_slc_stack_1x1:
         self.subband_header = {}  # Characteristics for subband processing
         self.subimages = {}
         self.count = 0
-        self.max = None
 
     def read_meta_data(self, polarisation=["HH", "HV", "VV"]):
         """ A method to read UAVSAR SLC 1x1 meta data (*.ann file)
@@ -128,28 +127,6 @@ class Uavsar_slc_stack_1x1:
         else:
             self.subband_header[file_name]["Crop"] = None
 
-
-    def get_max_module(self,meta_identifier, seg):
-        """
-        Computes the maximum of a given entire SLC image
-        """
-        # Load the entire SLC file
-        file_name = meta_identifier + "_s" + str(seg) + "_1x1.slc"
-        data_path = os.path.join(self.path, file_name)
-        # Read Characteristics
-        self.read_subband_header(seg, None, file_name, meta_identifier)
-        print("Reading %s" % (data_path))
-        shape = (
-            self.subband_header[file_name]["AzCnt"],
-            self.subband_header[file_name]["RgCnt"],
-        )
-        # Load file
-        temp_array = np.fromfile(
-                        data_path, dtype=np.complex64
-                    ).reshape(shape)
-        self.max = np.max(np.abs(temp_array))
-        del temp_array
-
     def read_data(self, meta_identifier, seg, crop=None):
         """A method to read UAVSAR SLC 1x1 data stack
 
@@ -202,13 +179,13 @@ class Uavsar_slc_stack_1x1:
                                 shape,
                                 [previous_l, l, previous_m, m],
                                 data_path,
-                            )-self.max
+                            )
                             self.slc_data[file_name].append(temp_array)
                             np.save(
                                 "./data_files/train/high_resolution/{}_{}.npy".format(
                                     file_name[:-4], count
                                 ),
-                                temp_array,
+                                np.abs(temp_array),
                             )
                             count += 1
                             del temp_array
@@ -418,7 +395,7 @@ class Uavsar_slc_stack_1x1:
                     "./data_files/train/low_resolution/{}_{}.npy".format(
                         identifier[:-4], i
                     ),
-                    np.fft.ifft2(sub_spectre),
+                    np.abs(np.fft.ifft2(sub_spectre)),
                 )
                 del sub_spectre
 
@@ -428,7 +405,7 @@ class Uavsar_slc_stack_1x1:
                     "./data_files/train/low_resolution/{}_{}.npy".format(
                         identifier[:-4], i
                     ),
-                    np.fft.ifft2(sub_spectre),
+                    np.abs(np.fft.ifft2(sub_spectre)),
                 )
                 del sub_spectre
 

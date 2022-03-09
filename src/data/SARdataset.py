@@ -5,7 +5,6 @@ import torch
 import random
 
 from torch.utils.data import Dataset
-from PIL import Image
 from skimage import exposure
 from skimage import data, img_as_float
 
@@ -37,8 +36,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+                for f in os.listdir(os.path.join(self.root, "high_resolution_small"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution_small", f))
             ]
 
     def __getitem__(self, idx):
@@ -52,30 +51,22 @@ class SARdataset(Dataset):
         """
 
         if self.test:
-            return (
-                Image.fromarray(
-                    np.uint8(apply_processing(np.load(self.files_names[idx])))
-                ),
-                self.files_names[idx].split("/")[-1],
-            )
+            return to_db(np.load(self.files_names[idx])),self.files_names[idx].split("/")[-1] 
 
         else:
-            image_input = apply_processing(
+            image_input = to_db(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "low_resolution_small", self.files_names[idx]))
             )
-            image_target = apply_processing(
+            image_target = to_db(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "high_resolution_small", self.files_names[idx]))
             )
 
             # Perform augmentation on images
             mode = random.randint(0, 7)
 
-            return (
-                Image.fromarray(np.uint8(augment_img(image_input, mode=mode))),
-                Image.fromarray(np.uint8(augment_img(image_target, mode=mode))),
-            )
+            return augment_img(image_input, mode=mode), augment_img(image_target, mode=mode)
 
     def __len__(self):
         """Operator len that returns the size of the dataset
@@ -86,7 +77,7 @@ class SARdataset(Dataset):
         return len(self.files_names)
 
 
-def apply_processing(data, maxi=None):
+def to_db(data, maxi=None):
     """A function to have the images in log mode
 
     Args:
@@ -97,7 +88,6 @@ def apply_processing(data, maxi=None):
     """
 
     img = 20 * np.log10(np.abs(data) + 1e-15)
-    img = np.clip(img, -60, 0)
     return img
 
 
@@ -141,7 +131,7 @@ def augment_img(img, mode=0):
     Args:
         img (np.array): image
         mode (int): transformation mode. Defaults to 0.
-
++60)/60
     Returns:
         np.array: trasnformed image
     """

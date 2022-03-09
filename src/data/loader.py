@@ -1,5 +1,7 @@
 import torch
 import torchvision.transforms as transforms
+import tqdm 
+import numpy as np 
 
 from data.SARdataset import SARdataset
 
@@ -21,22 +23,33 @@ class DatasetTransformer(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
+        print(np.expand_dims(img,0).shape)
+        print(self.transform(np.expand_dims(img,0)).shape)
         if self.test:
-            return self.transform(img), target
+            return self.transform(torch.from_numpy(img)), target
         else:
-            return self.transform(img), self.transform(target)
+            return self.transform(np.expand_dims(img,0)).float(), self.transform(np.expand_dims(target, 0)).float()
 
     def __len__(self):
         return len(self.base_dataset)
 
+def get_max(loader):
+    """
+    Get the max pixel value of the whole dataset
+    """
+    # Init max
+    maxi = -np.inf
+    # Loop over the dataset
+    print("COMPUTE MAX OVER THE WHOLE DATASET")
+    for imgs, _ in tqdm.tqdm(loader):
+        candidate = np.max(imgs)
+        if candidate > maxi:
+            maxi = candidate
+    print("Max done")
+    return maxi
 
 def create_dataset(cfg):
-    """Function to create datasets torch object
-
-    Args:
-        cfg (dict): config
-
-    Returns:
+    """Function to create datasets torchget_max
         torch.dataset: validation and train sets
     """
 
@@ -45,31 +58,30 @@ def create_dataset(cfg):
 
     # Get the dataset for the training/validation sets
     train_valid_dataset = SARdataset(cfg["TRAIN_DATA_DIR"])
-    # Store max value of preprocessed dataset in max attribute  of SARDataset
-    print(len(train_valid_dataset))
-    print((1.0 - valid_ratio) * len(train_valid_dataset), "nb_train")
-    print(valid_ratio * len(train_valid_dataset), "nb_valid")
+
+    # Get dataset maximum
+    maxi = get_max(train_valid_dataset)
+
+    # Store max value of preprocessed dataset in max attribute of SARDataset
+
     # Split it into training and validation sets
     nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
-    print(nb_train)
     nb_valid = int(valid_ratio * len(train_valid_dataset))
-    print(nb_valid)
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
         train_valid_dataset, [nb_train, nb_valid]
     )
-    print(nb_valid)
 
     # Apply transforms (unsqueez dim 1 and convert to tensor)
     train_dataset = DatasetTransformer(
         train_dataset,
         transforms.Compose(
-            [transforms.Grayscale(num_output_channels=1), transforms.ToTensor()]
+            [transforms.ToTensor(), transforms.Lambda(lambda x : x.permute(1,0,2) - maxi)]
         ),
     )
     valid_dataset = DatasetTransformer(
         valid_dataset,
         transforms.Compose(
-            [transforms.Grayscale(num_output_channels=1), transforms.ToTensor()]
+            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi)]
         ),
     )
 
@@ -154,7 +166,7 @@ def load_test(cfg):
     test_dataset = DatasetTransformer(
         test_data,
         transforms.Compose(
-            [transforms.Grayscale(num_output_channels=1), transforms.ToTensor()]
+            []
         ),
         test=True,
     )
