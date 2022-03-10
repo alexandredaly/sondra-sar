@@ -2,6 +2,7 @@ import os
 import yaml
 import argparse
 import torch
+import numpy as np 
 from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
 from shutil import copyfile
@@ -20,7 +21,7 @@ from tools.train_utils import (
 from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
 from tools.regularizers import regularizer_orth2, regularizer_clip
-from data.SARdataset import equalize
+from data.utils import equalize
 
 import neptune.new as neptune
 from neptune.new.types import File
@@ -145,28 +146,24 @@ def main(cfg, path_to_config):
         # Get current learning rate
         learning_rate = scheduler.optimizer.param_groups[0]["lr"]
 
-        print(input_image)
-        print(restored_images)
-        print(target_images)
-
         # Log Neptune losses, psnr and lr
         run["logs/training/batch/training_loss"].log(training_loss)
         run["logs/training/batch/valid_loss"].log(valid_loss)
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
-        run["logs/valid/batch/Input_image"].log(File.as_image(equalize(input_image.squeeze()/255)))
-        run["logs/valid/batch/Restored_image"].log(File.as_image(equalize(restored_images/255)))
-        run["logs/valid/batch/Target_image"].log(File.as_image(equalize(target_images/255)))
+        run["logs/valid/batch/Input_image"].log(File.as_image(equalize(input_image)))
+        run["logs/valid/batch/Restored_image"].log(File.as_image(equalize(restored_images)))
+        run["logs/valid/batch/Target_image"].log(File.as_image(equalize(target_images)))
+        run["logs/valid/batch/Diff_Target_Restored"].log(File.as_image(np.abs(restored_images-target_images)))
 
     # Stop Neptune logging
     run.stop()
 
 
-
 if __name__ == "__main__":
 
     run = neptune.init(project="Sondra-SAR", 
-                       api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzYzAxM2I1Mi1jYTVlLTRjMmMtOWQwZC04NGU0OTA0ZDJkMjcifQ==",)
+                       api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwNjlkNzk3NC1iYTU5LTRlM2EtOTk4NS0yNGEwMDBmZDE1NWUifQ==",)
 
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)

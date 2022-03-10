@@ -6,6 +6,9 @@ DATASET:
     DOWNSCALE_FACTOR: 2
     DECIMATION: True
     WINDOW: "hanning"
+  CLIP:
+    MIN: -200
+    MAX: 0  
   IMAGE_SIZE: 250
   NUM_THREADS: 4
   BATCH_SIZE: 2

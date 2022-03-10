@@ -4,7 +4,7 @@ import tqdm
 import numpy as np 
 
 from data.SARdataset import SARdataset
-
+from data.utils import plot_hist 
 
 class DatasetTransformer(torch.utils.data.Dataset):
     """Apply transformation to a torch Dataset
@@ -23,8 +23,6 @@ class DatasetTransformer(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
-        print(np.expand_dims(img,0).shape)
-        print(self.transform(np.expand_dims(img,0)).shape)
         if self.test:
             return self.transform(torch.from_numpy(img)), target
         else:
@@ -70,18 +68,18 @@ def create_dataset(cfg):
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
         train_valid_dataset, [nb_train, nb_valid]
     )
-
-    # Apply transforms (unsqueez dim 1 and convert to tensor)
+    
+    # Apply transforms (to Tensor - retrieve max - clip )
     train_dataset = DatasetTransformer(
         train_dataset,
         transforms.Compose(
-            [transforms.ToTensor(), transforms.Lambda(lambda x : x.permute(1,0,2) - maxi)]
+            [transforms.ToTensor(), transforms.Lambda(lambda x : x.permute(1,0,2) - maxi), transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"]))]
         ),
     )
     valid_dataset = DatasetTransformer(
         valid_dataset,
         transforms.Compose(
-            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi)]
+            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi),transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"])) ]
         ),
     )
 
