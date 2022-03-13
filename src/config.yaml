@@ -1,4 +1,4 @@
-RAW_DATA_DIR: '../data/data_files/raw_data'
+RAW_DATA_DIR: './data/data_files/raw_data'
 TRAIN_DATA_DIR: '../data/data_files/train'
 DATASET:
   POLARISATION: ['HH']
@@ -6,9 +6,12 @@ DATASET:
     DOWNSCALE_FACTOR: 2
     DECIMATION: True
     WINDOW: "hanning"
+  CLIP:
+    MIN: -200
+    MAX: 0  
   IMAGE_SIZE: 250
   NUM_THREADS: 4
-  BATCH_SIZE: 1
+  BATCH_SIZE: 2
   VALID_RATIO: 0.2
 TRAIN:
   CHECKPOINT_STEP: 5

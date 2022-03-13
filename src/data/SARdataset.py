@@ -5,9 +5,10 @@ import torch
 import random
 
 from torch.utils.data import Dataset
-from PIL import Image
 from skimage import exposure
 from skimage import data, img_as_float
+
+from data.utils import to_db
 
 
 class SARdataset(Dataset):
@@ -26,7 +27,6 @@ class SARdataset(Dataset):
         """
         self.test = test
         self.root = root
-        self.max = None
 
         if self.test:
             self.files_names = [
@@ -38,8 +38,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+                for f in os.listdir(os.path.join(self.root, "high_resolution_small"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution_small", f))
             ]
 
     def __getitem__(self, idx):
@@ -53,34 +53,22 @@ class SARdataset(Dataset):
         """
 
         if self.test:
-            return (
-                Image.fromarray(
-                    np.uint8(apply_processing(np.load(self.files_names[idx])), self.max)
-                ),
-                self.files_names[idx].split("/")[-1],
-            )
+            return to_db(np.load(self.files_names[idx])),self.files_names[idx].split("/")[-1] 
 
         else:
-            image_input = apply_processing(
+            image_input = to_db(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]),
-                    self.max,
-                )
+                    os.path.join(self.root, "low_resolution_small", self.files_names[idx]))
             )
-            image_target = apply_processing(
+            image_target = to_db(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]),
-                    self.max,
-                )
+                    os.path.join(self.root, "high_resolution_small", self.files_names[idx]))
             )
 
             # Perform augmentation on images
             mode = random.randint(0, 7)
 
-            return (
-                Image.fromarray(np.uint8(augment_img(image_input, mode=mode))),
-                Image.fromarray(np.uint8(augment_img(image_target, mode=mode))),
-            )
+            return augment_img(image_input, mode=mode), augment_img(image_target, mode=mode)
 
     def __len__(self):
         """Operator len that returns the size of the dataset
@@ -90,85 +78,6 @@ class SARdataset(Dataset):
         """
         return len(self.files_names)
 
-    def compute_max_dataset(self):
-        """compute the maximum pixel value over all pre-preprocessed dataset and stores it in self.max attribute
-
-        Args:
-            loader (torc loader): Dataloader associated to dataset with preprocessing
-
-        Return:
-            None
-        """
-        maxi = None
-        for idx in range(self.__len__):
-            image_input = apply_processing(
-                np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx])
-                )
-            )
-            image_target = apply_processing(
-                np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx])
-                )
-            )
-            value = max(image_input.max(), image_target.max())
-            if value > maxi or maxi == None:
-                maxi = value
-            self.max = maxi
-
-
-def apply_processing(data, maxi=None):
-    """A function to have the images in log mode
-
-    Args:
-        data (np.array): the images as a numpy array
-
-    Return:
-        img (np.array): the processed image
-    """
-
-    img = 20 * np.log10(np.abs(data) + 1e-15)
-    if maxi == None:
-        img -= img.max()
-    else:
-        img -= maxi
-
-    img = np.clip(img, -60, 0)
-    return img
-
-
-def plot_sample(item, method="stretch"):
-    """Function to plot a sample (low_resolution,high_resolution)
-
-    Args:
-        item (tuple): an item from the SARdataset
-    """
-
-    # Process image to better visualize when plotting
-    if method == "stretch":
-        p2, p98 = np.percentile(item[0], (2, 98))
-        img_low = exposure.rescale_intensity(item[0], in_range=(p2, p98))
-        p2, p98 = np.percentile(item[1], (2, 98))
-        img_low = exposure.rescale_intensity(item[1], in_range=(p2, p98))
-
-    elif method == "equal":
-        img_low = exposure.equalize_hist(item[0])
-        img_high = exposure.equalize_hist(item[1])
-
-    else:
-        raise NameError("wrong 'method' or not defined")
-
-    # Plot low resolution image
-    plt.subplot(1, 2, 1)
-    plt.title("Low Resolution")
-    plt.imshow(img_as_float(item[0]), cmap=plt.cm.gray)
-
-    # Plot high resolution image
-    plt.subplot(1, 2, 2)
-    plt.title("High Resolution")
-    plt.imshow(img_as_float(item[1]), cmap=plt.cm.gray)
-    plt.show()
-
 
 def augment_img(img, mode=0):
     """Perform augmentation either flip and/or rotation
@@ -177,7 +86,7 @@ def augment_img(img, mode=0):
     Args:
         img (np.array): image
         mode (int): transformation mode. Defaults to 0.
-
++60)/60
     Returns:
         np.array: trasnformed image
     """
@@ -198,3 +107,4 @@ def augment_img(img, mode=0):
         return np.rot90(img, k=2).copy()
     elif mode == 7:
         return np.flipud(np.rot90(img, k=3)).copy()
+

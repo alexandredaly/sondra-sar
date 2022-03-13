@@ -20,11 +20,12 @@ def build_dataset(cfg):
     for identifier in sardata.meta_data:
 
         # Build the training set
-        sardata.read_data(identifier, crop=cfg["DATASET"]["IMAGE_SIZE"])
-        for i in range(1, 8):
+        for seg in range(1, 8):
             try:
+                sardata.get_max_module(identifier,seg)
+                sardata.read_data(identifier,seg, crop=cfg["DATASET"]["IMAGE_SIZE"])
                 sardata.subband_process(
-                    identifier + "_s{}_1x1.slc".format(i),
+                    identifier + "_s{}_1x1.slc".format(seg),
                     downscale_factor=cfg["DATASET"]["PREPROCESSING"][
                         "DOWNSCALE_FACTOR"
                     ],
