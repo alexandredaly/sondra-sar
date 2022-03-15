@@ -19,7 +19,7 @@ TRAIN:
     BOOL: True
     PATH: "../model_zoo/swinir/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_PSNR.pth"
     STRICT : False
-    LOSS :
+  LOSS :
     NAME: "l1"
     WEIGHT: 1
   OPTIMIZER:
