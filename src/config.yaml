@@ -16,10 +16,10 @@ DATASET:
 TRAIN:
   CHECKPOINT_STEP: 5
   PRETRAINED:
-    BOOL: False
-    PATH: ".."
-    STRICT : True
-  LOSS :
+    BOOL: True
+    PATH: "../model_zoo/swinir/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_PSNR.pth"
+    STRICT : False
+    LOSS :
     NAME: "l1"
     WEIGHT: 1
   OPTIMIZER:
