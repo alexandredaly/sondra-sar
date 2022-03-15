@@ -72,8 +72,12 @@ def main(cfg, path_to_config):
         device = torch.device("cpu")
 
     # Define the model
-    model = get_model(cfg)
-    model = model.to(device)
+    if not cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
+        model = get_model(cfg)
+        model = model.to(device)
+    else:
+        model = get_model(cfg, pretrained=True)
+        model = model.to(device)
 
     # Load pre trained model parameters
     if cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
