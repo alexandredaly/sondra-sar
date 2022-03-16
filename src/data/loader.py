@@ -24,7 +24,7 @@ class DatasetTransformer(torch.utils.data.Dataset):
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
         if self.test:
-            return self.transform(torch.from_numpy(img)), target
+            return self.transform(np.expand_dims(img,0)).float(), target
         else:
             return self.transform(np.expand_dims(img,0)).float(), self.transform(np.expand_dims(target, 0)).float()
 
@@ -60,7 +60,8 @@ def create_dataset(cfg):
     # Get dataset maximum
     maxi = get_max(train_valid_dataset)
 
-    # Store max value of preprocessed dataset in max attribute of SARDataset
+    # Store max value of preprocessed dataset
+    np.save("./data/dataset_maximum.npy", maxi)
 
     # Split it into training and validation sets
     nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
@@ -160,11 +161,14 @@ def load_test(cfg):
     # Init test dataset
     test_data = SARdataset(cfg["INFERENCE"]["PATH_TO_IMAGES"], test=True)
 
+    # Get the maximum of the training data
+    maxi = np.load("./data/dataset_maximum.npy")
+
     # Apply transforms
     test_dataset = DatasetTransformer(
         test_data,
         transforms.Compose(
-            []
+            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi),transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"])) ]
         ),
         test=True,
     )

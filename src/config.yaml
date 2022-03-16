@@ -36,15 +36,15 @@ TRAIN:
   REGULARIZER:
     ORTHSTEP: 0
     CLIPSTEP: 0
-  EPOCH: 1
+  EPOCH: 50
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
 INFERENCE:
-  PATH_TO_MODEL: '../trained_models/swintransformer_7/best_model.pth'
+  PATH_TO_MODEL: '../trained_models/swintransformer_82/best_model.pth'
   PATH_TO_IMAGES: '../data/data_files/test'
   PATH_TO_SAVE: '../data/data_files/visualisation'
-  BATCH_SIZE: 2
-  SAVE_ARRAY: False
+  BATCH_SIZE: 1
+  SAVE_ARRAY: True
   SAVE_PNG: True
 
 MODEL:
