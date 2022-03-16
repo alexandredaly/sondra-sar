@@ -3,7 +3,7 @@ import yaml
 import argparse
 import torch
 from PIL import Image
-
+import numpy as np 
 import data.loader as loader
 
 from tools.train_utils import get_model, load_network
@@ -40,7 +40,7 @@ def main(cfg):
     # Start testing loop
     for images, names in test_data:
         images = images.to(device)
-
+        print(images.shape)
         # Pass images through the model
         outputs = model(images)
 
@@ -50,11 +50,11 @@ def main(cfg):
 
             # Save output numpy array
             if cfg["INFERENCE"]["SAVE_ARRAY"]:
-                np.save(image, os.path.join(cfg["INFERENCE"]["PATH_TO_SAVE"], names[i]))
+                np.save(os.path.join(cfg["INFERENCE"]["PATH_TO_SAVE"], names[i]),image)
 
             # Save output png image
             if cfg["INFERENCE"]["SAVE_PNG"]:
-                img = Image.fromarray(np.uint8(image))
+                img = Image.fromarray(np.uint8(image.squeeze().squeeze()))
                 img.save(
                     os.path.join(
                         cfg["INFERENCE"]["PATH_TO_SAVE"], names[i][:-3] + "png"
