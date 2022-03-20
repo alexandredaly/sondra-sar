@@ -22,8 +22,7 @@ def build_dataset(cfg):
         # Build the training set
         for seg in range(1, 8):
             try:
-                sardata.get_max_module(identifier,seg)
-                sardata.read_data(identifier,seg, crop=cfg["DATASET"]["IMAGE_SIZE"])
+                sardata.read_data(identifier, seg, crop=cfg["DATASET"]["IMAGE_SIZE"])
                 sardata.subband_process(
                     identifier + "_s{}_1x1.slc".format(seg),
                     downscale_factor=cfg["DATASET"]["PREPROCESSING"][
@@ -32,8 +31,11 @@ def build_dataset(cfg):
                     decimation=cfg["DATASET"]["PREPROCESSING"]["DECIMATION"],
                     wd=cfg["DATASET"]["PREPROCESSING"]["WINDOW"],
                 )
-            except:
-                break
+            except Exception as e:
+                print(
+                    f"Segment number {seg} can't be found for the {e[:-11]} SLC image"
+                )
+                exit()
 
 
 if __name__ == "__main__":

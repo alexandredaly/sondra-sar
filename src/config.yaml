@@ -9,7 +9,8 @@ DATASET:
   CLIP:
     MIN: -200
     MAX: 0  
-  IMAGE_SIZE: 250
+  IMAGE_SIZE: 512
+  IN_CHANNELS: 3
   NUM_THREADS: 4
   BATCH_SIZE: 2
   VALID_RATIO: 0.2
@@ -18,7 +19,7 @@ TRAIN:
   PRETRAINED:
     BOOL: True
     PATH: "../model_zoo/swinir/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_PSNR.pth"
-    STRICT : False
+    STRICT : True
   LOSS :
     NAME: "l1"
     WEIGHT: 1
@@ -50,11 +51,10 @@ INFERENCE:
 MODEL:
   NAME: "SwinTransformer"
   SWINTRANSFORMER:
-    IN_CHANNELS: 1
-    PRETRAINED_IN_CHANNELS: 3
+    IN_CHANNELS: 3
     WINDOW_SIZE: 8
     IMG_SIZE: 64
-    IMG_RANGE: 1.0
+    IMG_RANGE: 200
     DEPTHS : [6, 6, 6, 6]
     EMBED_DIM: 60
     NUM_HEADS: [6, 6, 6, 6]

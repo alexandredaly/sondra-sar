@@ -1,10 +1,11 @@
 import torch
 import torchvision.transforms as transforms
-import tqdm 
-import numpy as np 
+import tqdm
+import numpy as np
 
 from data.SARdataset import SARdataset
-from data.utils import plot_hist 
+from data.utils import plot_hist
+
 
 class DatasetTransformer(torch.utils.data.Dataset):
     """Apply transformation to a torch Dataset
@@ -26,10 +27,14 @@ class DatasetTransformer(torch.utils.data.Dataset):
         if self.test:
             return self.transform(np.expand_dims(img,0)).float(), target
         else:
-            return self.transform(np.expand_dims(img,0)).float(), self.transform(np.expand_dims(target, 0)).float()
+            return (
+                self.transform(np.expand_dims(img, 0)).float(),
+                self.transform(np.expand_dims(target, 0)).float(),
+            )
 
     def __len__(self):
         return len(self.base_dataset)
+
 
 def get_max(loader):
     """
@@ -45,6 +50,7 @@ def get_max(loader):
             maxi = candidate
     print("Max done")
     return maxi
+
 
 def create_dataset(cfg):
     """Function to create datasets torchget_max
@@ -69,18 +75,46 @@ def create_dataset(cfg):
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
         train_valid_dataset, [nb_train, nb_valid]
     )
-    
+
     # Apply transforms (to Tensor - retrieve max - clip )
     train_dataset = DatasetTransformer(
         train_dataset,
         transforms.Compose(
-            [transforms.ToTensor(), transforms.Lambda(lambda x : x.permute(1,0,2) - maxi), transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"]))]
+            [
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(
+                    lambda x: x.clamp_(
+                        min=cfg["DATASET"]["CLIP"]["MIN"],
+                        max=cfg["DATASET"]["CLIP"]["MAX"],
+                    )
+                ),
+                transforms.Lambda(
+                    lambda x: x.expand(3, -1, -1)
+                    if cfg["DATASET"]["IN_CHANNELS"] == 3
+                    else x
+                ),
+            ]
         ),
     )
     valid_dataset = DatasetTransformer(
         valid_dataset,
         transforms.Compose(
-            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi),transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"])) ]
+            [
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(
+                    lambda x: x.clamp_(
+                        min=cfg["DATASET"]["CLIP"]["MIN"],
+                        max=cfg["DATASET"]["CLIP"]["MAX"],
+                    )
+                ),
+                transforms.Lambda(
+                    lambda x: x.expand(3, -1, -1)
+                    if cfg["DATASET"]["IN_CHANNELS"] == 3
+                    else x
+                ),
+            ]
         ),
     )
 
@@ -168,7 +202,7 @@ def load_test(cfg):
     test_dataset = DatasetTransformer(
         test_data,
         transforms.Compose(
-            [transforms.ToTensor(),transforms.Lambda(lambda x : x.permute(1,0,2) - maxi),transforms.Lambda(lambda x : x.clamp_(min=cfg["DATASET"]["CLIP"]["MIN"], max = cfg["DATASET"]["CLIP"]["MAX"])) ]
+            []
         ),
         test=True,
     )

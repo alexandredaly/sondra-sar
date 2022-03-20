@@ -2,7 +2,7 @@ import os
 import yaml
 import argparse
 import torch
-import numpy as np 
+import numpy as np
 from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
 from shutil import copyfile
@@ -26,6 +26,7 @@ from data.utils import equalize
 import neptune.new as neptune
 from neptune.new.types import File
 
+
 def main(cfg, path_to_config):
     """Main pipeline to train a model
 
@@ -46,18 +47,18 @@ def main(cfg, path_to_config):
     # TODO: Check what is depths and HEAD in SwinTransformers
 
     # Log Neptune config & pararameters
-    params = {"im_size": cfg["DATASET"]["IMAGE_SIZE"],
-            "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
-            "batch_size": cfg["DATASET"]["BATCH_SIZE"],
-            "loss": cfg["TRAIN"]["LOSS"]["NAME"],
-            "optimizer": cfg["TRAIN"]["OPTIMIZER"]["NAME"],
-            "lr": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["LR_INITIAL"],
-            "weight_decay": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["WEIGHT_DECAY"],
-            "pretrained": cfg["TRAIN"]["PRETRAINED"]["BOOL"],
-            "epochs": cfg["TRAIN"]["EPOCH"]
-            }
+    params = {
+        "im_size": cfg["DATASET"]["IMAGE_SIZE"],
+        "downscale_factor": cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
+        "batch_size": cfg["DATASET"]["BATCH_SIZE"],
+        "loss": cfg["TRAIN"]["LOSS"]["NAME"],
+        "optimizer": cfg["TRAIN"]["OPTIMIZER"]["NAME"],
+        "lr": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["LR_INITIAL"],
+        "weight_decay": cfg["TRAIN"]["OPTIMIZER"]["ADAM"]["WEIGHT_DECAY"],
+        "pretrained": cfg["TRAIN"]["PRETRAINED"]["BOOL"],
+        "epochs": cfg["TRAIN"]["EPOCH"],
+    }
 
-    
     run["algorithm"] = cfg["MODEL"]["NAME"].lower()
     run["config/dataset/path"] = cfg["TRAIN_DATA_DIR"]
     run["config/params"] = params
@@ -72,12 +73,10 @@ def main(cfg, path_to_config):
         device = torch.device("cpu")
 
     # Define the model
-    if not cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
-        model = get_model(cfg)
-        model = model.to(device)
-    else:
-        model = get_model(cfg, pretrained=True)
-        model = model.to(device)
+    model = get_model(cfg, pretrained=cfg["TRAIN"]["PRETRAINED"]["BOOL"])
+    model = model.to(device)
+
+    print(model)
 
     # Load pre trained model parameters
     if cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
@@ -156,9 +155,13 @@ def main(cfg, path_to_config):
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
         run["logs/valid/batch/Input_image"].log(File.as_image(equalize(input_image)))
-        run["logs/valid/batch/Restored_image"].log(File.as_image(equalize(restored_images)))
+        run["logs/valid/batch/Restored_image"].log(
+            File.as_image(equalize(restored_images))
+        )
         run["logs/valid/batch/Target_image"].log(File.as_image(equalize(target_images)))
-        run["logs/valid/batch/Diff_Target_Restored"].log(File.as_image(np.abs(restored_images-target_images)))
+        run["logs/valid/batch/Diff_Target_Restored"].log(
+            File.as_image(np.abs(restored_images - target_images))
+        )
 
     # Stop Neptune logging
     run.stop()
@@ -166,8 +169,10 @@ def main(cfg, path_to_config):
 
 if __name__ == "__main__":
 
-    run = neptune.init(project="Sondra-SAR", 
-                       api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwNjlkNzk3NC1iYTU5LTRlM2EtOTk4NS0yNGEwMDBmZDE1NWUifQ==",)
+    run = neptune.init(
+        project="Sondra-SAR",
+        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwNjlkNzk3NC1iYTU5LTRlM2EtOTk4NS0yNGEwMDBmZDE1NWUifQ==",
+    )
 
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)

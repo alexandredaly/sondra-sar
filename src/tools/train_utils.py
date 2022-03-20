@@ -53,44 +53,24 @@ def get_model(cfg, pretrained=False):
     Returns:
         nn.Module: Neural Network
     """
-    if not pretrained:
-        if cfg["MODEL"]["NAME"] == "SwinTransformer":
-            # Create an instance of SwinIR model
-            return SwinIR(
-                upscale=cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
-                in_chans=cfg["MODEL"]["SWINTRANSFORMER"]["IN_CHANNELS"],
-                img_size=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_SIZE"],
-                window_size=cfg["MODEL"]["SWINTRANSFORMER"]["WINDOW_SIZE"],
-                img_range=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_RANGE"],
-                depths=cfg["MODEL"]["SWINTRANSFORMER"]["DEPTHS"],
-                embed_dim=cfg["MODEL"]["SWINTRANSFORMER"]["EMBED_DIM"],
-                num_heads=cfg["MODEL"]["SWINTRANSFORMER"]["NUM_HEADS"],
-                mlp_ratio=cfg["MODEL"]["SWINTRANSFORMER"]["MLP_RATIO"],
-                upsampler=cfg["MODEL"]["SWINTRANSFORMER"]["UPSAMPLER"],
-                resi_connection=cfg["MODEL"]["SWINTRANSFORMER"]["RESI_CONNECTION"],
-            )
+    if cfg["MODEL"]["NAME"] == "SwinTransformer":
+        # Create an instance of SwinIR model
+        return SwinIR(
+            upscale=cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
+            in_chans=cfg["MODEL"]["SWINTRANSFORMER"]["IN_CHANNELS"],
+            img_size=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_SIZE"],
+            window_size=cfg["MODEL"]["SWINTRANSFORMER"]["WINDOW_SIZE"],
+            img_range=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_RANGE"],
+            depths=cfg["MODEL"]["SWINTRANSFORMER"]["DEPTHS"],
+            embed_dim=cfg["MODEL"]["SWINTRANSFORMER"]["EMBED_DIM"],
+            num_heads=cfg["MODEL"]["SWINTRANSFORMER"]["NUM_HEADS"],
+            mlp_ratio=cfg["MODEL"]["SWINTRANSFORMER"]["MLP_RATIO"],
+            upsampler=cfg["MODEL"]["SWINTRANSFORMER"]["UPSAMPLER"],
+            resi_connection=cfg["MODEL"]["SWINTRANSFORMER"]["RESI_CONNECTION"],
+        )
 
-        elif cfg["MODEL"]["NAME"] == "SomethingElse":
-            return None
-    else:
-        if cfg["MODEL"]["NAME"] == "SwinTransformer":
-            # Create an instance of SwinIR model
-            return SwinIR(
-                upscale=cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
-                in_chans=cfg["MODEL"]["SWINTRANSFORMER"]["PRETRAINED_IN_CHANNELS"],
-                img_size=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_SIZE"],
-                window_size=cfg["MODEL"]["SWINTRANSFORMER"]["WINDOW_SIZE"],
-                img_range=cfg["MODEL"]["SWINTRANSFORMER"]["IMG_RANGE"],
-                depths=cfg["MODEL"]["SWINTRANSFORMER"]["DEPTHS"],
-                embed_dim=cfg["MODEL"]["SWINTRANSFORMER"]["EMBED_DIM"],
-                num_heads=cfg["MODEL"]["SWINTRANSFORMER"]["NUM_HEADS"],
-                mlp_ratio=cfg["MODEL"]["SWINTRANSFORMER"]["MLP_RATIO"],
-                upsampler=cfg["MODEL"]["SWINTRANSFORMER"]["UPSAMPLER"],
-                resi_connection=cfg["MODEL"]["SWINTRANSFORMER"]["RESI_CONNECTION"],
-            )
-
-        elif cfg["MODEL"]["NAME"] == "SomethingElse":
-            return None
+    elif cfg["MODEL"]["NAME"] == "SomethingElse":
+        return None
 
 
 def get_loss(cfg):
@@ -196,7 +176,6 @@ def load_network(load_path, model, strict=True, param_key="params"):
         if param_key in state_dict.keys():
             state_dict = state_dict[param_key]
         model.load_state_dict(state_dict, strict=strict)
-        model.in_chans = 1
     else:
         state_dict_old = torch.load(load_path)
         if param_key in state_dict_old.keys():
@@ -207,5 +186,5 @@ def load_network(load_path, model, strict=True, param_key="params"):
         ):
             state_dict[key] = param_old
         model.load_state_dict(state_dict, strict=True)
-        model.in_chans = 1
+
         del state_dict_old, state_dict
