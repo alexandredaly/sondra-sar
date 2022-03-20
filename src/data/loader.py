@@ -199,13 +199,7 @@ def load_test(cfg):
     maxi = np.load("./data/dataset_maximum.npy")
 
     # Apply transforms
-    test_dataset = DatasetTransformer(
-        test_data,
-        transforms.Compose(
-            []
-        ),
-        test=True,
-    )
+    test_dataset = DatasetTransformer(test_data, transforms.Compose([]), test=True)
 
     # Build Loader
     test_loader = torch.utils.data.DataLoader(
