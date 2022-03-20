@@ -44,7 +44,7 @@ class ModelCheckpoint:
             torch.save(self.model.state_dict(), filepath)
 
 
-def get_model(cfg):
+def get_model(cfg, pretrained=False):
     """This function loads the right model
 
     Args:
@@ -53,7 +53,6 @@ def get_model(cfg):
     Returns:
         nn.Module: Neural Network
     """
-
     if cfg["MODEL"]["NAME"] == "SwinTransformer":
         # Create an instance of SwinIR model
         return SwinIR(
@@ -187,4 +186,5 @@ def load_network(load_path, model, strict=True, param_key="params"):
         ):
             state_dict[key] = param_old
         model.load_state_dict(state_dict, strict=True)
+
         del state_dict_old, state_dict

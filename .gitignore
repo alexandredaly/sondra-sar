@@ -3,3 +3,4 @@ data/data_files/*
 trained_models/*
 !trained_models/README.md
 src/tensorboard/*
+src/.neptune

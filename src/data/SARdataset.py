@@ -38,8 +38,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution_small"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution_small", f))
+                for f in os.listdir(os.path.join(self.root, "high_resolution"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
             ]
 
     def __getitem__(self, idx):
@@ -58,11 +58,11 @@ class SARdataset(Dataset):
         else:
             image_input = to_db(
                 np.load(
-                    os.path.join(self.root, "low_resolution_small", self.files_names[idx]))
+                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
             )
             image_target = to_db(
                 np.load(
-                    os.path.join(self.root, "high_resolution_small", self.files_names[idx]))
+                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
             )
 
             # Perform augmentation on images
