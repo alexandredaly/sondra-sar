@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 
-def calculate_psnr(img1, img2, border=0):
+def calculate_psnr(img1, img2, border=0,scale):
     """Function to computer peak to signal ratio
 
     Args:
@@ -16,7 +16,7 @@ def calculate_psnr(img1, img2, border=0):
     Raises:
         ValueError: [description]
 
-    Returns:
+    Returns
         [type]: [description]
     """
     # img1 and img2 have range [-60, 0]
@@ -32,10 +32,10 @@ def calculate_psnr(img1, img2, border=0):
     mse = np.mean((img1 - img2) ** 2, axis=(2, 3))
     mse[mse == 0] = float("inf")
 
-    return np.mean(10 * np.log10(60**2 / mse))
+    return np.mean(10 * np.log10(scale**2 / mse))
 
 
-def valid_one_epoch(model, loader, f_loss, device, loss_weight):
+def valid_one_epoch(model, loader, f_loss, device, loss_weight,scale):
     """Train the model for one epoch
 
     Args:
@@ -66,7 +66,7 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight):
             n_samples += low.shape[0]
             tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
-            psnr = calculate_psnr(outputs.cpu().numpy(), high.cpu().numpy())
+            psnr = calculate_psnr(outputs.cpu().numpy(), high.cpu().numpy(),scale)
             avg_psnr += psnr
 
         return (

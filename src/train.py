@@ -118,6 +118,32 @@ def main(cfg, path_to_config):
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
         print("EPOCH : {}".format(epoch))
 
+        if epoch == 0:
+            valid_loss, psnr, input_image, restored_images, target_images = valid_one_epoch(
+                model,
+                valid_loader,
+                f_loss,
+                device,
+                cfg["TRAIN"]["LOSS"]["WEIGHT"],
+                cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
+            )
+            # Scatter all images with the same transformation
+            target_scattered, p2, p98 = equalize(target_images)
+
+            # Log Neptune losses, psnr and lr
+            run["logs/training/batch/valid_loss"].log(valid_loss)
+            run["logs/training/batch/psnr"].log(psnr)
+            run["logs/valid/batch/Input_image"].log(
+                File.as_image(equalize(input_image, p2, p98)[0])
+            )
+            run["logs/valid/batch/Restored_image"].log(
+                File.as_image(equalize(restored_images, p2, p98)[0])
+            )
+            run["logs/valid/batch/Target_image"].log(File.as_image(target_scattered))
+            run["logs/valid/batch/Diff_Target_Restored"].log(
+                File.as_image(np.abs(restored_images - target_images))
+            )
+
         # Train
         training_loss = train_one_epoch(
             model,
@@ -137,7 +163,12 @@ def main(cfg, path_to_config):
 
         # Validation
         valid_loss, psnr, input_image, restored_images, target_images = valid_one_epoch(
-            model, valid_loader, f_loss, device, cfg["TRAIN"]["LOSS"]["WEIGHT"]
+            model,
+            valid_loader,
+            f_loss,
+            device,
+            cfg["TRAIN"]["LOSS"]["WEIGHT"],
+            cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
         )
 
         # Update scheduler
@@ -149,16 +180,21 @@ def main(cfg, path_to_config):
         # Get current learning rate
         learning_rate = scheduler.optimizer.param_groups[0]["lr"]
 
+        # Scatter all images with the same transformation
+        target_scattered, p2, p98 = equalize(target_images)
+
         # Log Neptune losses, psnr and lr
         run["logs/training/batch/training_loss"].log(training_loss)
         run["logs/training/batch/valid_loss"].log(valid_loss)
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
-        run["logs/valid/batch/Input_image"].log(File.as_image(equalize(input_image)))
-        run["logs/valid/batch/Restored_image"].log(
-            File.as_image(equalize(restored_images))
+        run["logs/valid/batch/Input_image"].log(
+            File.as_image(equalize(input_image, p2, p98)[0])
         )
-        run["logs/valid/batch/Target_image"].log(File.as_image(equalize(target_images)))
+        run["logs/valid/batch/Restored_image"].log(
+            File.as_image(equalize(restored_images, p2, p98)[0])
+        )
+        run["logs/valid/batch/Target_image"].log(File.as_image(target_scattered))
         run["logs/valid/batch/Diff_Target_Restored"].log(
             File.as_image(np.abs(restored_images - target_images))
         )

@@ -21,7 +21,7 @@ def to_db(data, maxi=None):
 
 def plot_hist(img):
 
-    _ = plt.hist(img, bins='auto')  # arguments are passed to np.histogram
+    _ = plt.hist(img, bins="auto")  # arguments are passed to np.histogram
     plt.title("Histogram with 'auto' bins")
     plt.show()
 
@@ -59,10 +59,8 @@ def plot_sample(item, method="stretch"):
     plt.show()
 
 
-def equalize(image):
-    p2,p98 = np.percentile(image,(1,99))
-    img = exposure.rescale_intensity(image, in_range=(p2, p98), out_range = (0,1))
-    print(img)
-    return img
-
-
+def equalize(image, p2=None, p98=None):
+    if not p2:
+        p2, p98 = np.percentile(image, (1, 99))
+    img = exposure.rescale_intensity(image, in_range=(p2, p98), out_range=(0, 1))
+    return img, p2, p98
