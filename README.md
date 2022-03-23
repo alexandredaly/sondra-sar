@@ -65,6 +65,7 @@ To train the model, choose everything you need in the config file and launch thi
 cd src
 python3 train.py --path_to_config ./config.yaml
 ```
+To monitor the training, check the following link : https://app.neptune.ai/youssefadarrab/Sondra-SAR/experiments?split=tbl&dash=charts&viewId=standard-view
 
 # Les participants
 
