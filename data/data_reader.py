@@ -38,7 +38,7 @@ class Uavsar_slc_stack_1x1:
         *
         """
 
-    def __init__(self, path):
+    def __init__(self, path, path_to_save):
         self.path = path  # folder of SAR data
         self.meta_data = {}  # all images metadata
         # self.llh_grid = {}     # not used now
@@ -46,6 +46,7 @@ class Uavsar_slc_stack_1x1:
         self.subband_header = {}  # Characteristics for subband processing
         self.subimages = {}
         self.count = 0
+        self.path_to_save = path_to_save
 
     def read_meta_data(self, polarisation=["HH", "HV", "VV"]):
         """ A method to read UAVSAR SLC 1x1 meta data (*.ann file)
@@ -138,17 +139,13 @@ class Uavsar_slc_stack_1x1:
                      1]. Defaults to None. If crop is an int, it breaks the entire SLC DAta into small square of size crop.
                     Be careful data should be stored in matrix order:
                     axis 0 -> azimuth & axis 1 -> range
-        """   
+        """
         # File name processing
         file_name = meta_identifier + "_s" + str(seg) + "_1x1.slc"
         data_path = os.path.join(self.path, file_name)
         if os.path.isfile(data_path):
             if file_name in list(self.slc_data.keys()):
-                print(
-                    "Warning file",
-                    file_name,
-                    "will be erased by the new read",
-                )
+                print("Warning file", file_name, "will be erased by the new read")
 
             # Read characteristics for subband processing
             self.read_subband_header(seg, crop, file_name, meta_identifier)
@@ -176,17 +173,15 @@ class Uavsar_slc_stack_1x1:
                     for m in range(0, shape[1], crop):
                         if previous_m < m and previous_l < l:
                             temp_array = self.construct_cropped_image_from_slc(
-                                shape,
-                                [previous_l, l, previous_m, m],
-                                data_path,
+                                shape, [previous_l, l, previous_m, m], data_path
                             )
                             self.slc_data[file_name].append(temp_array)
                             np.save(
-                                "./data_files/train/high_resolution/{}_{}.npy".format(
-                                    file_name[:-4], count
-                                ),
+                                f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{count}.npy",
                                 np.abs(temp_array),
                             )
+                            if count % 10 == 0:
+                                print(f"{count} high resolution generated from {file_name}")
                             count += 1
                             del temp_array
                         previous_m = m
@@ -363,7 +358,8 @@ class Uavsar_slc_stack_1x1:
                 -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
                 dtype=np.complex64,
             )
-            print(i)
+            if i % 10 == 0:
+                print(f"{i} degraded images generated")
             spectre = np.fft.fft2(data)
 
             sub_spectre = Filter * spectre
@@ -387,14 +383,9 @@ class Uavsar_slc_stack_1x1:
                 sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
 
             if identifier in list(self.subimages.keys()):
-                print(
-                    "Warning sub images", identifier, "will be erased by the processing"
-                )
                 # self.subimages[identifier].append(np.fft.ifft2(sub_spectre))
                 np.save(
-                    "./data_files/train/low_resolution/{}_{}.npy".format(
-                        identifier[:-4], i
-                    ),
+                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
                     np.abs(np.fft.ifft2(sub_spectre)),
                 )
                 del sub_spectre
@@ -402,9 +393,7 @@ class Uavsar_slc_stack_1x1:
             else:
                 self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
                 np.save(
-                    "./data_files/train/low_resolution/{}_{}.npy".format(
-                        identifier[:-4], i
-                    ),
+                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
                     np.abs(np.fft.ifft2(sub_spectre)),
                 )
                 del sub_spectre
