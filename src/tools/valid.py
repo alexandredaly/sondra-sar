@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 
-def calculate_psnr(img1, img2, border=0,scale):
+def calculate_psnr(img1, img2,scale, border=0):
     """Function to computer peak to signal ratio
 
     Args:
@@ -72,7 +72,7 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight,scale):
         return (
             tot_loss / n_samples,
             psnr / n_samples,
-            low[0].cpu().numpy().squeeze(0),
-            outputs[0].cpu().numpy().squeeze(0),
-            high[0].cpu().numpy().squeeze(0),
+            np.mean(low[0].cpu().numpy(),axis = 0),
+            np.mean(outputs[0].cpu().numpy(),axis=0),
+            np.mean(high[0].cpu().numpy(),axis=0),
         )
