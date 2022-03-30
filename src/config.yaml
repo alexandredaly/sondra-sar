@@ -1,5 +1,5 @@
-RAW_DATA_DIR: './data/data_files/raw_data/SSurge_12600_14170_008_141120_L090HH_01_BC_s1_1x1'
-TRAIN_DATA_DIR: './data/data_files/train'
+RAW_DATA_DIR: './data/data_files/raw_data'
+TRAIN_DATA_DIR: '../data/data_files/train'
 DATASET:
   POLARISATION: ['HH']
   PREPROCESSING:
@@ -9,8 +9,8 @@ DATASET:
   CLIP:
     MIN: -200
     MAX: 0
-  IMAGE_SIZE: [1000,3000,1000,3000]
-  IN_CHANNELS: 3
+  IMAGE_SIZE: [15000,16000,6000,7000]
+  IN_CHANNELS: 1
   NUM_THREADS: 4
   BATCH_SIZE: 2
   VALID_RATIO: 0.2
@@ -19,10 +19,10 @@ TRAIN:
   PRETRAINED:
     BOOL: True
     PATH: "../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth"
-    STRICT : True
+    STRICT : False
   LOSS :
-    NAME: "l1"
-    WEIGHT: 1
+    NAME: "SSIM"
+    WEIGHT: -1
   OPTIMIZER:
     NAME: Adam
     CLIPGRAD: 0
@@ -30,14 +30,14 @@ TRAIN:
       WEIGHT_DECAY: 0
       LR_INITIAL: 0.001
   SCHEDULER:
-    NAME: "MultiStep"
-    MULTISTEP:
-      STEPS: [200000, 400000, 600000, 800000, 1000000, 2000000]
-      GAMMA: 0.5
+    NAME: "ReduceOnPlateau"
+    ReduceOnPlateau:
+      PATIENCE: 3
+      THRESH: 1
   REGULARIZER:
     ORTHSTEP: 0
     CLIPSTEP: 0
-  EPOCH: 50
+  EPOCH: 10
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
 INFERENCE:
@@ -51,10 +51,10 @@ INFERENCE:
 MODEL:
   NAME: "SwinTransformer"
   SWINTRANSFORMER:
-    IN_CHANNELS: 3
+    IN_CHANNELS: 1
     WINDOW_SIZE: 8
     IMG_SIZE: 64
-    IMG_RANGE: 200
+    IMG_RANGE: 1
     DEPTHS : [6, 6, 6, 6]
     EMBED_DIM: 60
     NUM_HEADS: [6, 6, 6, 6]

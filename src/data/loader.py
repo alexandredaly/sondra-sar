@@ -4,20 +4,21 @@ import tqdm
 import numpy as np
 
 from data.SARdataset import SARdataset
-from data.utils import plot_hist
+from data.utils import plot_hist, augment_img
 
 
 class DatasetTransformer(torch.utils.data.Dataset):
     """Apply transformation to a torch Dataset
     """
 
-    def __init__(self, base_dataset, transform, test=False):
+    def __init__(self, base_dataset, transform, augment = False, test=False):
         """Initialize DatasetTransformer class
 
         Args:
             base_dataset (torchvision.datasets.folder.ImageFolder): Image dataset
             transform (torchvision.transforms.Compose): List of transformation to apply
         """
+        self.augment = augment
         self.test = test
         self.base_dataset = base_dataset
         self.transform = transform
@@ -27,10 +28,15 @@ class DatasetTransformer(torch.utils.data.Dataset):
         if self.test:
             return self.transform(np.expand_dims(img, 0)).float(), target
         else:
+            if self.augment:
+                img = augment_img(img)
+                target = augment_img(target)
+
             return (
                 self.transform(np.expand_dims(img, 0)).float(),
                 self.transform(np.expand_dims(target, 0)).float(),
             )
+            
 
     def __len__(self):
         return len(self.base_dataset)
@@ -43,12 +49,14 @@ def get_max(loader):
     # Init max
     maxi = -np.inf
     # Loop over the dataset
-    print("COMPUTE MAX OVER THE WHOLE DATASET")
+    print("####################################################")
+    print("####### COMPUTE MAX OVER THE WHOLE DATASET #########")
     for imgs, _ in tqdm.tqdm(loader):
         candidate = np.max(imgs)
         if candidate > maxi:
             maxi = candidate
-    print("Max done")
+    print(f"######### Max = {maxi} db has been saved #########")
+    print("#############################################################")
     return maxi
 
 
@@ -89,6 +97,7 @@ def create_dataset(cfg):
                         max=cfg["DATASET"]["CLIP"]["MAX"],
                     )
                 ),
+                transforms.Lambda(lambda x : x if not cfg["TRAIN"]["LOSS"]["NAME"]=="SSIM" else x/(cfg["DATASET"]["CLIP"]["MAX"]-cfg["DATASET"]["CLIP"]["MIN"])+1),
                 transforms.Lambda(
                     lambda x: x.expand(3, -1, -1)
                     if cfg["DATASET"]["IN_CHANNELS"] == 3
@@ -96,7 +105,9 @@ def create_dataset(cfg):
                 ),
             ]
         ),
+        augment = True,
     )
+
     valid_dataset = DatasetTransformer(
         valid_dataset,
         transforms.Compose(
@@ -109,6 +120,7 @@ def create_dataset(cfg):
                         max=cfg["DATASET"]["CLIP"]["MAX"],
                     )
                 ),
+                transforms.Lambda(lambda x : x if not cfg["TRAIN"]["LOSS"]["NAME"]=="SSIM" else x/(cfg["DATASET"]["CLIP"]["MAX"]-cfg["DATASET"]["CLIP"]["MIN"])+1),
                 transforms.Lambda(
                     lambda x: x.expand(3, -1, -1)
                     if cfg["DATASET"]["IN_CHANNELS"] == 3

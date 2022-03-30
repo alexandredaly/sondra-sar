@@ -18,7 +18,7 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object
     """
 
-    def __init__(self, root, test=False):
+    def __init__(self, root, test=False, augment_valid=False):
         """
         Args:
             root (str): absolute path of the data files
@@ -27,6 +27,7 @@ class SARdataset(Dataset):
         """
         self.test = test
         self.root = root
+        self.augment_valid = augment_valid
 
         if self.test:
             self.files_names = [
@@ -38,8 +39,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+                for f in os.listdir(os.path.join(self.root, "high_resolution_small"))
+                if os.path.isfile(os.path.join(self.root, "high_resolution_small", f))
             ]
 
     def __getitem__(self, idx):
@@ -58,17 +59,14 @@ class SARdataset(Dataset):
         else:
             image_input = to_db(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "low_resolution_small", self.files_names[idx]))
             )
             image_target = to_db(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
+                    os.path.join(self.root, "high_resolution_small", self.files_names[idx]))
             )
 
-            # Perform augmentation on images
-            mode = random.randint(0, 7)
-
-            return augment_img(image_input, mode=mode), augment_img(image_target, mode=mode)
+            return image_input,image_target
 
     def __len__(self):
         """Operator len that returns the size of the dataset
@@ -79,32 +77,4 @@ class SARdataset(Dataset):
         return len(self.files_names)
 
 
-def augment_img(img, mode=0):
-    """Perform augmentation either flip and/or rotation
-       From Kai Zhang (github: https://github.com/cszn)
-
-    Args:
-        img (np.array): image
-        mode (int): transformation mode. Defaults to 0.
-+60)/60
-    Returns:
-        np.array: trasnformed image
-    """
-
-    if mode == 0:
-        return img
-    elif mode == 1:
-        return np.flipud(np.rot90(img)).copy()
-    elif mode == 2:
-        return np.flipud(img).copy()
-    elif mode == 3:
-        return np.rot90(img, k=3).copy()
-    elif mode == 4:
-        return np.flipud(np.rot90(img, k=2)).copy()
-    elif mode == 5:
-        return np.rot90(img).copy()
-    elif mode == 6:
-        return np.rot90(img, k=2).copy()
-    elif mode == 7:
-        return np.flipud(np.rot90(img, k=3)).copy()
 
