@@ -25,7 +25,7 @@ class DatasetTransformer(torch.utils.data.Dataset):
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
         if self.test:
-            return self.transform(np.expand_dims(img,0)).float(), target
+            return self.transform(np.expand_dims(img, 0)).float(), target
         else:
             return (
                 self.transform(np.expand_dims(img, 0)).float(),
@@ -199,7 +199,27 @@ def load_test(cfg):
     maxi = np.load("./data/dataset_maximum.npy")
 
     # Apply transforms
-    test_dataset = DatasetTransformer(test_data, transforms.Compose([]), test=True)
+    test_dataset = DatasetTransformer(
+        test_data,
+        transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(
+                    lambda x: x.clamp_(
+                        min=cfg["DATASET"]["CLIP"]["MIN"],
+                        max=cfg["DATASET"]["CLIP"]["MAX"],
+                    )
+                ),
+                transforms.Lambda(
+                    lambda x: x.expand(3, -1, -1)
+                    if cfg["DATASET"]["IN_CHANNELS"] == 3
+                    else x
+                ),
+            ]
+        ),
+        test=True,
+    )
 
     # Build Loader
     test_loader = torch.utils.data.DataLoader(

@@ -1,5 +1,5 @@
-RAW_DATA_DIR: './data/data_files/raw_data'
-TRAIN_DATA_DIR: '../data/data_files/train'
+RAW_DATA_DIR: './data/data_files/raw_data/SSurge_12600_14170_008_141120_L090HH_01_BC_s1_1x1'
+TRAIN_DATA_DIR: './data/data_files/train'
 DATASET:
   POLARISATION: ['HH']
   PREPROCESSING:
@@ -8,8 +8,8 @@ DATASET:
     WINDOW: "hanning"
   CLIP:
     MIN: -200
-    MAX: 0  
-  IMAGE_SIZE: 512
+    MAX: 0
+  IMAGE_SIZE: [1000,3000,1000,3000]
   IN_CHANNELS: 3
   NUM_THREADS: 4
   BATCH_SIZE: 2
@@ -41,8 +41,8 @@ TRAIN:
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
 INFERENCE:
-  PATH_TO_MODEL: '../trained_models/swintransformer_82/best_model.pth'
-  PATH_TO_IMAGES: '../data/data_files/test'
+  PATH_TO_MODEL: '../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth'
+  PATH_TO_IMAGES: '../data/data_files/test/low_resolution'
   PATH_TO_SAVE: '../data/data_files/visualisation'
   BATCH_SIZE: 1
   SAVE_ARRAY: True
