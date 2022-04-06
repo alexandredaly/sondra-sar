@@ -13,12 +13,13 @@ def build_dataset(cfg):
         os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], "high_resolution"))
 
     # Init data reader
-    sardata = Uavsar_slc_stack_1x1(cfg["RAW_DATA_DIR"], cfg["TRAIN_DATA_DIR"])
+    sardata = Uavsar_slc_stack_1x1(cfg)
     sardata.read_meta_data(polarisation=cfg["DATASET"]["POLARISATION"])
 
     # Read all sar data
+    print(5)
     for identifier in sardata.meta_data:
-
+        print(identifier)
         # Build the training set
         for seg in range(1, 8):
             try:

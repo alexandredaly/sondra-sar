@@ -23,6 +23,7 @@
 
 import os
 import fnmatch
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -38,15 +39,18 @@ class Uavsar_slc_stack_1x1:
         *
         """
 
-    def __init__(self, path, path_to_save):
-        self.path = path  # folder of SAR data
+    def __init__(self, cfg):
+        self.path = cfg["RAW_DATA_DIR"]  # folder of SAR data
         self.meta_data = {}  # all images metadata
         # self.llh_grid = {}     # not used now
         self.slc_data = {}  # SAR images
         self.subband_header = {}  # Characteristics for subband processing
         self.subimages = {}
         self.count = 0
-        self.path_to_save = path_to_save
+        self.path_to_save = cfg["TRAIN_DATA_DIR"]
+        self.path_to_inf_image = cfg["INFERENCE"]["PATH_TO_IMAGES"]
+        self.path_to_inf_save = cfg["INFERENCE"]["PATH_TO_SAVE"]
+        self.CountToCoord = {}
 
     def read_meta_data(self, polarisation=["HH", "HV", "VV"]):
         """ A method to read UAVSAR SLC 1x1 meta data (*.ann file)
@@ -143,6 +147,7 @@ class Uavsar_slc_stack_1x1:
         # File name processing
         file_name = meta_identifier + "_s" + str(seg) + "_1x1.slc"
         data_path = os.path.join(self.path, file_name)
+        print(os.path.isfile(data_path))
         if os.path.isfile(data_path):
             if file_name in list(self.slc_data.keys()):
                 print("Warning file", file_name, "will be erased by the new read")
@@ -161,6 +166,10 @@ class Uavsar_slc_stack_1x1:
                     shape, crop, data_path
                 )
                 self.slc_data[file_name] = [temp_array]
+                np.save(
+                    f"{self.path_to_inf_image}/high_resolution/{file_name[:-4]}.npy",
+                    np.abs(temp_array),
+                )
                 del temp_array
 
             # If crop is an int, breaks the image into several subimages of size crop and save them.
@@ -180,12 +189,17 @@ class Uavsar_slc_stack_1x1:
                                 f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{count}.npy",
                                 np.abs(temp_array),
                             )
+                            self.CountToCoord[count:[previous_l, l, previous_m, m]]
                             if count % 10 == 0:
-                                print(f"{count} high resolution generated from {file_name}")
+                                print(
+                                    f"{count} high resolution generated from {file_name}"
+                                )
                             count += 1
                             del temp_array
                         previous_m = m
                     previous_l = l
+                with open(f"{file_name}-coord.yml", "w") as yaml_file:
+                    yaml.dump(self.CountToCoord, yaml_file, default_flow_style=False)
 
     def plot_amp_img(self, cplx_image):
         """This method plots the magnitude of the images
@@ -384,18 +398,31 @@ class Uavsar_slc_stack_1x1:
 
             if identifier in list(self.subimages.keys()):
                 # self.subimages[identifier].append(np.fft.ifft2(sub_spectre))
-                np.save(
-                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
-                    np.abs(np.fft.ifft2(sub_spectre)),
-                )
-                del sub_spectre
+                if isinstance(crop, list):
+                    np.save(
+                        f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
+                        np.abs(np.fft.ifft2(sub_spectre)),
+                    )
+                else:
+                    np.save(
+                        f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
+                        np.abs(np.fft.ifft2(sub_spectre)),
+                    )
+                    del sub_spectre
 
             else:
                 self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
-                np.save(
-                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
-                    np.abs(np.fft.ifft2(sub_spectre)),
-                )
+
+                if isinstance(crop, list):
+                    np.save(
+                        f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
+                        np.abs(np.fft.ifft2(sub_spectre)),
+                    )
+                else:
+                    np.save(
+                        f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
+                        np.abs(np.fft.ifft2(sub_spectre)),
+                    )
                 del sub_spectre
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):

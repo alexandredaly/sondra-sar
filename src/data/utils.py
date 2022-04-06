@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random 
 
 from skimage import exposure
 from skimage import data, img_as_float
-
 
 def to_db(data, maxi=None):
     """A function to have the images in log mode
@@ -64,3 +64,36 @@ def equalize(image, p2=None, p98=None):
         p2, p98 = np.percentile(image, (1, 99))
     img = exposure.rescale_intensity(image, in_range=(p2, p98), out_range=(0, 1))
     return img, p2, p98
+
+
+def augment_img(img):
+    """Perform augmentation either flip and/or rotation
+       From Kai Zhang (github: https://github.com/cszn)
+
+    Args:
+        img (np.array): image
+        mode (int): transformation mode. Defaults to 0.
++60)/60
+    Returns:
+        np.array: trasnformed image
+    """
+    
+    mode = random.randint(0, 7)
+    
+    if mode == 0:
+        return img
+    elif mode == 1:
+        return np.flipud(np.rot90(img)).copy()
+    elif mode == 2:
+        return np.flipud(img).copy()
+    elif mode == 3:
+        return np.rot90(img, k=3).copy()
+    elif mode == 4:
+        return np.flipud(np.rot90(img, k=2)).copy()
+    elif mode == 5:
+        return np.rot90(img).copy()
+    elif mode == 6:
+        return np.rot90(img, k=2).copy()
+    elif mode == 7:
+        return np.flipud(np.rot90(img, k=3)).copy()
+

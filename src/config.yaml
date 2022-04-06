@@ -8,9 +8,9 @@ DATASET:
     WINDOW: "hanning"
   CLIP:
     MIN: -200
-    MAX: 0  
-  IMAGE_SIZE: 512
-  IN_CHANNELS: 3
+    MAX: 0
+  IMAGE_SIZE: [15000,16000,6000,7000]
+  IN_CHANNELS: 1
   NUM_THREADS: 4
   BATCH_SIZE: 2
   VALID_RATIO: 0.2
@@ -19,10 +19,10 @@ TRAIN:
   PRETRAINED:
     BOOL: True
     PATH: "../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth"
-    STRICT : True
+    STRICT : False
   LOSS :
-    NAME: "l1"
-    WEIGHT: 1
+    NAME: "SSIM"
+    WEIGHT: -1
   OPTIMIZER:
     NAME: Adam
     CLIPGRAD: 0
@@ -30,19 +30,19 @@ TRAIN:
       WEIGHT_DECAY: 0
       LR_INITIAL: 0.001
   SCHEDULER:
-    NAME: "MultiStep"
-    MULTISTEP:
-      STEPS: [200000, 400000, 600000, 800000, 1000000, 2000000]
-      GAMMA: 0.5
+    NAME: "ReduceOnPlateau"
+    ReduceOnPlateau:
+      PATIENCE: 3
+      THRESH: 1
   REGULARIZER:
     ORTHSTEP: 0
     CLIPSTEP: 0
-  EPOCH: 50
+  EPOCH: 10
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
 INFERENCE:
-  PATH_TO_MODEL: '../trained_models/swintransformer_82/best_model.pth'
-  PATH_TO_IMAGES: '../data/data_files/test'
+  PATH_TO_MODEL: '../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth'
+  PATH_TO_IMAGES: '../data/data_files/test/low_resolution'
   PATH_TO_SAVE: '../data/data_files/visualisation'
   BATCH_SIZE: 1
   SAVE_ARRAY: True
@@ -51,10 +51,10 @@ INFERENCE:
 MODEL:
   NAME: "SwinTransformer"
   SWINTRANSFORMER:
-    IN_CHANNELS: 3
+    IN_CHANNELS: 1
     WINDOW_SIZE: 8
     IMG_SIZE: 64
-    IMG_RANGE: 200
+    IMG_RANGE: 1
     DEPTHS : [6, 6, 6, 6]
     EMBED_DIM: 60
     NUM_HEADS: [6, 6, 6, 6]
