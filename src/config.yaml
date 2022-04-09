@@ -49,7 +49,7 @@ INFERENCE:
   SAVE_PNG: True
 
 MODEL:
-  NAME: "SwinTransformer"
+  NAME: "SRCNN"
   SWINTRANSFORMER:
     IN_CHANNELS: 1
     WINDOW_SIZE: 8
