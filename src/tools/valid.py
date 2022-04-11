@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 
-def calculate_psnr(img1, img2,scale, border=0):
+def calculate_psnr(img1, img2, scale, border=0):
     """Function to computer peak to signal ratio
 
     Args:
@@ -24,18 +24,18 @@ def calculate_psnr(img1, img2,scale, border=0):
     if not img1.shape == img2.shape:
         raise ValueError("Input images must have the same dimensions.")
     h, w = img1.shape[2:]
-    img1 = img1[:,:, border : h - border, border : w - border]
-    img2 = img2[:,:, border : h - border, border : w - border]
+    img1 = img1[:, :, border : h - border, border : w - border]
+    img2 = img2[:, :, border : h - border, border : w - border]
 
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
     mse = np.mean((img1 - img2) ** 2, axis=(2, 3))
     mse[mse == 0] = float("inf")
 
-    return np.mean(10 * np.log10(scale**2 / mse))
+    return np.mean(10 * np.log10(scale ** 2 / mse))
 
 
-def valid_one_epoch(model, loader, f_loss, device, loss_weight,scale):
+def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
     """Train the model for one epoch
 
     Args:
@@ -63,16 +63,20 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight,scale):
             # Compute the forward pass through the network up to the loss
             outputs = model(low)
             loss = loss_weight * f_loss(outputs, high)
+            l1_loss = torch.nn.functional.l1_loss(outputs, high)
+            l2_loss = torch.nn.functional.mse_loss(outputs, high)
             n_samples += low.shape[0]
             tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
-            psnr = calculate_psnr(outputs.cpu().numpy(), high.cpu().numpy(),scale)
+            psnr = calculate_psnr(outputs.cpu().numpy(), high.cpu().numpy(), scale)
             avg_psnr += psnr
 
         return (
             tot_loss / n_samples,
             psnr / n_samples,
-            np.mean(low[0].cpu().numpy(),axis = 0),
-            np.mean(outputs[0].cpu().numpy(),axis=0),
-            np.mean(high[0].cpu().numpy(),axis=0),
+            np.mean(low[0].cpu().numpy(), axis=0),
+            np.mean(outputs[0].cpu().numpy(), axis=0),
+            np.mean(high[0].cpu().numpy(), axis=0),
+            l1_loss,
+            l2_loss,
         )

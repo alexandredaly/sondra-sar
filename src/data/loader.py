@@ -11,7 +11,7 @@ class DatasetTransformer(torch.utils.data.Dataset):
     """Apply transformation to a torch Dataset
     """
 
-    def __init__(self, base_dataset, transform, augment = False, test=False):
+    def __init__(self, base_dataset, transform, augment=False, test=False):
         """Initialize DatasetTransformer class
 
         Args:
@@ -36,7 +36,6 @@ class DatasetTransformer(torch.utils.data.Dataset):
                 self.transform(np.expand_dims(img, 0)).float(),
                 self.transform(np.expand_dims(target, 0)).float(),
             )
-            
 
     def __len__(self):
         return len(self.base_dataset)
@@ -81,7 +80,9 @@ def create_dataset(cfg):
     nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
     nb_valid = int(valid_ratio * len(train_valid_dataset))
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
-        train_valid_dataset, [nb_train, nb_valid]
+        train_valid_dataset,
+        [nb_train, nb_valid],
+        generator=torch.Generator().manual_seed(55),
     )
 
     # Apply transforms (to Tensor - retrieve max - clip )
@@ -105,7 +106,7 @@ def create_dataset(cfg):
                 ),
             ]
         ),
-        augment = True,
+        augment=True,
     )
 
     valid_dataset = DatasetTransformer(
