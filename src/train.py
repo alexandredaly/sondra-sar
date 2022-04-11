@@ -3,13 +3,10 @@ import yaml
 import argparse
 import torch
 import numpy as np
-from torchvision.utils import make_grid
-from torch.utils.tensorboard import SummaryWriter
 from shutil import copyfile
-from skimage import exposure
 
 import data.loader as loader
-
+import matplotlib.pyplot as plt
 from tools.train_utils import (
     ModelCheckpoint,
     get_loss,
@@ -77,12 +74,13 @@ def main(cfg, path_to_config):
     model = get_model(cfg, pretrained=cfg["TRAIN"]["PRETRAINED"]["BOOL"])
     model = model.to(device)
 
+    print(model)
+
     # Load pre trained model parameters
     if cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
         load_network(
             cfg["TRAIN"]["PRETRAINED"]["PATH"],
             model,
-            pretrained = True,
             strict=cfg["TRAIN"]["PRETRAINED"]["STRICT"],
             param_key="params",
         )
@@ -96,9 +94,6 @@ def main(cfg, path_to_config):
 
     # Define Scheduler
     scheduler = get_scheduler(cfg, optimizer)
-
-    # Tracking with tensorboard
-    tensorboard_writer = SummaryWriter(log_dir=cfg["TRAIN"]["TENSORBOARD_DIR"])
 
     # Init directory to save model saving best models
     top_logdir = cfg["TRAIN"]["SAVE_MODEL_DIR"]
@@ -114,12 +109,14 @@ def main(cfg, path_to_config):
         save_dir, model, cfg["TRAIN"]["EPOCH"], cfg["TRAIN"]["CHECKPOINT_STEP"]
     )
 
+    image_first_epoch = None
+    fig = plt.figure()
     # Start training loop
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
         print("EPOCH : {}".format(epoch))
 
         if epoch == 0:
-            valid_loss, psnr, input_image, restored_images, target_images = valid_one_epoch(
+            valid_loss, psnr, input_image, restored_images, target_images, l1_loss, l2_loss = valid_one_epoch(
                 model,
                 valid_loader,
                 f_loss,
@@ -129,10 +126,11 @@ def main(cfg, path_to_config):
             )
             # Scatter all images with the same transformation
             target_scattered, p2, p98 = equalize(target_images)
-
             # Log Neptune losses, psnr and lr
             run["logs/training/batch/valid_loss"].log(valid_loss)
             run["logs/training/batch/psnr"].log(psnr)
+            run["logs/training/batch/L2_loss"].log(l2_loss)
+            run["logs/training/batch/L1_loss"].log(l1_loss)
             run["logs/valid/batch/Input_image"].log(
                 File.as_image(equalize(input_image, p2, p98)[0])
             )
@@ -162,7 +160,7 @@ def main(cfg, path_to_config):
             model.apply(regularizer_clip)
 
         # Validation
-        valid_loss, psnr, input_image, restored_images, target_images = valid_one_epoch(
+        valid_loss, psnr, input_image, restored_images, target_images, l1_loss, l2_loss = valid_one_epoch(
             model,
             valid_loader,
             f_loss,
@@ -170,6 +168,9 @@ def main(cfg, path_to_config):
             cfg["TRAIN"]["LOSS"]["WEIGHT"],
             cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
         )
+
+        if epoch == 0:
+            image_first_epoch = restored_images
 
         # Update scheduler
         scheduler.step(valid_loss)
@@ -181,28 +182,34 @@ def main(cfg, path_to_config):
         learning_rate = scheduler.optimizer.param_groups[0]["lr"]
 
         # Scatter all images with the same transformation
-        maxi = max([np.max(input_image), np.max(restored_images), np.max(target_images)])
-        mini = min([np.min(input_image), np.min(restored_images), np.min(target_images)])
-
-        input_image = (input_image-mini)/(maxi-mini) 
-        restored_images = (restored_images-mini)/(maxi-mini) 
-        target_images = (target_images-mini)/(maxi-mini)
+        target_scattered, p2, p98 = equalize(target_images)
 
         # Log Neptune losses, psnr and lr
         run["logs/training/batch/training_loss"].log(training_loss)
         run["logs/training/batch/valid_loss"].log(valid_loss)
         run["logs/training/batch/psnr"].log(psnr)
         run["logs/training/batch/learning_rate"].log(learning_rate)
+        run["logs/training/batch/L2_loss"].log(l2_loss)
+        run["logs/training/batch/L1_loss"].log(l1_loss)
         run["logs/valid/batch/Input_image"].log(
-            File.as_image(exposure.equalize_hist(input_image))
+            File.as_image(equalize(input_image, p2, p98)[0])
         )
         run["logs/valid/batch/Restored_image"].log(
-            File.as_image(exposure.equalize_hist(restored_images))
+            File.as_image(equalize(restored_images, p2, p98)[0])
         )
-        run["logs/valid/batch/Target_image"].log(File.as_image(exposure.equalize_hist(target_images)))
+        run["logs/valid/batch/Target_image"].log(File.as_image(target_scattered))
         run["logs/valid/batch/Diff_Target_Restored"].log(
             File.as_image(np.abs(restored_images - target_images))
         )
+
+        run["logs/valid/batch/diff_restored_over_epochs"].log(
+            File.as_image(np.abs(restored_images - image_first_epoch))
+        )
+
+        plt.hist(target_images, bins=30)
+        run["logs/valid/batch/histograms_target"].log(fig)
+        plt.hist(restored_images, bins=30)
+        run["logs/valid/batch/histograms_restored"].log(fig)
 
     # Stop Neptune logging
     run.stop()
