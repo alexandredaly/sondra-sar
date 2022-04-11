@@ -4,6 +4,7 @@ import torch.nn as nn
 import numpy as np
 
 from models.SwinTransformer import SwinIR
+from models.SRCNN import SRCNN
 from tools.SSIMLoss import SSIMLoss
 
 
@@ -68,6 +69,9 @@ def get_model(cfg, pretrained=False):
             upsampler=cfg["MODEL"]["SWINTRANSFORMER"]["UPSAMPLER"],
             resi_connection=cfg["MODEL"]["SWINTRANSFORMER"]["RESI_CONNECTION"],
         )
+
+    elif cfg["MODEL"]["NAME"] == "SRCNN":
+        return SRCNN()
 
     elif cfg["MODEL"]["NAME"] == "SomethingElse":
         return None

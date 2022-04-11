@@ -50,7 +50,6 @@ class Uavsar_slc_stack_1x1:
         self.path_to_save = cfg["TRAIN_DATA_DIR"]
         self.path_to_inf_image = cfg["INFERENCE"]["PATH_TO_IMAGES"]
         self.path_to_inf_save = cfg["INFERENCE"]["PATH_TO_SAVE"]
-        self.CountToCoord = {}
 
     def read_meta_data(self, polarisation=["HH", "HV", "VV"]):
         """ A method to read UAVSAR SLC 1x1 meta data (*.ann file)
@@ -189,7 +188,6 @@ class Uavsar_slc_stack_1x1:
                                 f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{count}.npy",
                                 np.abs(temp_array),
                             )
-                            self.CountToCoord[count:[previous_l, l, previous_m, m]]
                             if count % 10 == 0:
                                 print(
                                     f"{count} high resolution generated from {file_name}"
@@ -198,8 +196,6 @@ class Uavsar_slc_stack_1x1:
                             del temp_array
                         previous_m = m
                     previous_l = l
-                with open(f"{file_name}-coord.yml", "w") as yaml_file:
-                    yaml.dump(self.CountToCoord, yaml_file, default_flow_style=False)
 
     def plot_amp_img(self, cplx_image):
         """This method plots the magnitude of the images

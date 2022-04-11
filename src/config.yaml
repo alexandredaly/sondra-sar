@@ -9,7 +9,7 @@ DATASET:
   CLIP:
     MIN: -200
     MAX: 0
-  IMAGE_SIZE: [15000,16000,6000,7000]
+  IMAGE_SIZE: 512
   IN_CHANNELS: 1
   NUM_THREADS: 4
   BATCH_SIZE: 2
@@ -17,7 +17,7 @@ DATASET:
 TRAIN:
   CHECKPOINT_STEP: 5
   PRETRAINED:
-    BOOL: True
+    BOOL: False
     PATH: "../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth"
     STRICT : False
   LOSS :
@@ -37,7 +37,7 @@ TRAIN:
   REGULARIZER:
     ORTHSTEP: 0
     CLIPSTEP: 0
-  EPOCH: 10
+  EPOCH: 50
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
 INFERENCE:
@@ -49,7 +49,7 @@ INFERENCE:
   SAVE_PNG: True
 
 MODEL:
-  NAME: "SwinTransformer"
+  NAME: "SRCNN"
   SWINTRANSFORMER:
     IN_CHANNELS: 1
     WINDOW_SIZE: 8
