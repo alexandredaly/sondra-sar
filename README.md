@@ -2,13 +2,15 @@
 
 # Getting Started
 
-## Requirements
+## Requirements and virtual env
 
 Before running any code, make sure to install all the dependancies by running
-```
-pip3 install -r requirements.txt
-```
 
+```
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 ## Pre-commit
 
 To enable the pre commit checks go to the root and type make on the terminal
@@ -16,6 +18,7 @@ To enable the pre commit checks go to the root and type make on the terminal
 cd sondra-sar
 make
 ```
+
 
 
 ## Data Preparation
