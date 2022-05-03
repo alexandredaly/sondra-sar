@@ -45,7 +45,6 @@ class Uavsar_slc_stack_1x1:
         # self.llh_grid = {}     # not used now
         self.slc_data = {}  # SAR images
         self.subband_header = {}  # Characteristics for subband processing
-        self.subimages = {}
         self.count = 0
         self.path_to_save = cfg["TRAIN_DATA_DIR"]
         self.path_to_inf_image = cfg["INFERENCE"]["PATH_TO_IMAGES"]
