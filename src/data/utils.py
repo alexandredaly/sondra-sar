@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import random 
+import random
+import yaml
+import pathlib
 
 from skimage import exposure
 from skimage import data, img_as_float
+
 
 def to_db(data, maxi=None):
     """A function to have the images in log mode
@@ -33,12 +36,14 @@ def plot_sample(item, method="stretch"):
         item (tuple): an item from the SARdataset
     """
 
+    item = list(map(to_db, item))
+
     # Process image to better visualize when plotting
     if method == "stretch":
         p2, p98 = np.percentile(item[0], (2, 98))
         img_low = exposure.rescale_intensity(item[0], in_range=(p2, p98))
         p2, p98 = np.percentile(item[1], (2, 98))
-        img_low = exposure.rescale_intensity(item[1], in_range=(p2, p98))
+        img_high = exposure.rescale_intensity(item[1], in_range=(p2, p98))
 
     elif method == "equal":
         img_low = exposure.equalize_hist(item[0])
@@ -50,12 +55,12 @@ def plot_sample(item, method="stretch"):
     # Plot low resolution image
     plt.subplot(1, 2, 1)
     plt.title("Low Resolution")
-    plt.imshow(img_as_float(item[0]), cmap=plt.cm.gray)
+    plt.imshow(img_as_float(img_low), cmap=plt.cm.gray)
 
     # Plot high resolution image
     plt.subplot(1, 2, 2)
     plt.title("High Resolution")
-    plt.imshow(img_as_float(item[1]), cmap=plt.cm.gray)
+    plt.imshow(img_as_float(img_high), cmap=plt.cm.gray)
     plt.show()
 
 
@@ -68,18 +73,18 @@ def equalize(image, p2=None, p98=None):
 
 def augment_img(img):
     """Perform augmentation either flip and/or rotation
-       From Kai Zhang (github: https://github.com/cszn)
+           From Kai Zhang (github: https://github.com/cszn)
 
-    Args:
-        img (np.array): image
-        mode (int): transformation mode. Defaults to 0.
-+60)/60
-    Returns:
-        np.array: trasnformed image
+        Args:
+            img (np.array): image
+            mode (int): transformation mode. Defaults to 0.
+    +60)/60
+        Returns:
+            np.array: trasnformed image
     """
-    
+
     mode = random.randint(0, 7)
-    
+
     if mode == 0:
         return img
     elif mode == 1:
@@ -97,3 +102,18 @@ def augment_img(img):
     elif mode == 7:
         return np.flipud(np.rot90(img, k=3)).copy()
 
+
+if __name__ == "__main__":
+    # Example for plotting a high/low res sample
+    cfgpath = "./config.yaml"
+    with open(cfgpath, "r") as ymlfile:
+        cfg = yaml.load(ymlfile, Loader=yaml.CFullLoader)
+
+    fname = "SSurge_12600_14170_008_141120_L090HH_01_BC_s1_1x1_2469.npy"
+    highres_datapath = pathlib.Path(cfg["TRAIN_DATA_DIR"]) / "high_resolution"
+    high_res = np.load(highres_datapath / fname)
+    lowres_datapath = pathlib.Path(cfg["TRAIN_DATA_DIR"]) / "low_resolution"
+    low_res = np.load(lowres_datapath / fname)
+    item = (low_res, high_res)
+
+    plot_sample(item)
