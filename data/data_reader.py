@@ -35,9 +35,9 @@ from skimage.filters import window
 
 class Uavsar_slc_stack_1x1:
     """A class to store data corresponding to a SLC stack of UAVSAR data
-        * path = path to a folder containing the files obtained from UAVSAR (.slc, .ann, .llh)
-        *
-        """
+    * path = path to a folder containing the files obtained from UAVSAR (.slc, .ann, .llh)
+    *
+    """
 
     def __init__(self, cfg):
         self.path = cfg["RAW_DATA_DIR"]  # folder of SAR data
@@ -52,10 +52,10 @@ class Uavsar_slc_stack_1x1:
         self.path_to_inf_save = cfg["INFERENCE"]["PATH_TO_SAVE"]
 
     def read_meta_data(self, polarisation=["HH", "HV", "VV"]):
-        """ A method to read UAVSAR SLC 1x1 meta data (*.ann file)
-            Contain SAR metadata for all segments
-            Inputs:
-                * polarisation = a list of polarisations to read
+        """A method to read UAVSAR SLC 1x1 meta data (*.ann file)
+        Contain SAR metadata for all segments
+        Inputs:
+            * polarisation = a list of polarisations to read
         """
 
         # Obtain list of all files in directory
@@ -216,10 +216,10 @@ class Uavsar_slc_stack_1x1:
     def plot_equalized_img(
         self, data, name, method="equal", crop=None, bins=256, savefig=False
     ):
-        """ A method to plot single UAVSAR SLC 1x1 data
-            Inputs:
-                * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None.
-                * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
+        """A method to plot single UAVSAR SLC 1x1 data
+        Inputs:
+            * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None.
+            * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
 
         """
 
@@ -256,11 +256,11 @@ class Uavsar_slc_stack_1x1:
     def plot_mlpls_img(
         self, method="equal", bins=256, all=False, crop=None, savefig=False
     ):
-        """ A method to plot multiples UAVSAR SLC 1x1 data
-            Inputs:
-                * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None.
-                * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
-                * all = True for plotting all data in self.data, False for plotting the 1st data
+        """A method to plot multiples UAVSAR SLC 1x1 data
+        Inputs:
+            * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None.
+            * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
+            * all = True for plotting all data in self.data, False for plotting the 1st data
         """
         print(self.slc_data, "slc")
         if bool(self.slc_data):
@@ -282,13 +282,13 @@ class Uavsar_slc_stack_1x1:
             raise KeyError("Empty dictionary")
 
     def subband_process(self, identifier, downscale_factor=2, decimation=True, wd=None):
-        """ A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain
-            Inputs:
-                *identifier -> self.slc_data.keys() to select the data
-                *decimation = True to halve pixels numbers for each dimension
-                            = False to keep the same but using zero padding method
-                *wd         = choose window to mitigate secondary lobes see help(window) for windows option
-                *
+        """A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain
+        Inputs:
+            *identifier -> self.slc_data.keys() to select the data
+            *decimation = True to halve pixels numbers for each dimension
+                        = False to keep the same but using zero padding method
+            *wd         = choose window to mitigate secondary lobes see help(window) for windows option
+            *
         """
 
         RgCnt = self.subband_header[identifier]["RgCnt"]
@@ -341,7 +341,7 @@ class Uavsar_slc_stack_1x1:
         # Spectral grid
         (KKrange, KKazimuth) = np.meshgrid(krange, kazimuth)
 
-        frequence = np.sqrt(KKrange ** 2 + KKazimuth ** 2)
+        frequence = np.sqrt(KKrange**2 + KKazimuth**2)
         theta = np.arctan2(KKazimuth, KKrange)
 
         f_min = frequence.min()
@@ -363,6 +363,7 @@ class Uavsar_slc_stack_1x1:
         )
 
         # Add an offset in the dual space (SAR process) ~ (FFT shift)
+        # slc_data[file_name] contains all the high resolution subimages
         for i, data in enumerate(self.slc_data[identifier]):
             data = data * np.exp(
                 -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
@@ -370,6 +371,8 @@ class Uavsar_slc_stack_1x1:
             )
             if i % 10 == 0:
                 print(f"{i} degraded images generated")
+            #TODO: The FFT is performed on the cropped image and this is not
+            #      the large SLC that is fft-ed then cropped
             spectre = np.fft.fft2(data)
 
             sub_spectre = Filter * spectre
@@ -382,6 +385,10 @@ class Uavsar_slc_stack_1x1:
             if decimation:
                 # Décimation par 2 de chaque dim, crop central
                 div = downscale_factor * 2
+                # WARNING : the code below may need to be adapted
+                # if downscale_factor is not 2 !!!
+                assert downscale_factor == 2
+
                 sub_spectre = sub_spectre[
                     sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
                     sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
@@ -389,37 +396,20 @@ class Uavsar_slc_stack_1x1:
                 # self.plot_amp_img(sub_spectre)
 
             if wd is not None:
-
+                # TODO: Cheng : to be improved ? because a windowing is already
+                # applied on the large SLC image
                 sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
 
-            if identifier in list(self.subimages.keys()):
-                # self.subimages[identifier].append(np.fft.ifft2(sub_spectre))
-                if isinstance(crop, list):
-                    np.save(
-                        f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
-                        np.abs(np.fft.ifft2(sub_spectre)),
-                    )
-                else:
-                    np.save(
-                        f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
-                        np.abs(np.fft.ifft2(sub_spectre)),
-                    )
-                    del sub_spectre
-
+            lowres_img = np.abs(np.fft.ifft2(sub_spectre)
+            if isinstance(crop, list):
+                np.save(
+                    f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy", lowres_img
+                )
             else:
-                self.subimages[identifier] = [np.fft.ifft2(sub_spectre)]
-
-                if isinstance(crop, list):
-                    np.save(
-                        f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
-                        np.abs(np.fft.ifft2(sub_spectre)),
-                    )
-                else:
-                    np.save(
-                        f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy",
-                        np.abs(np.fft.ifft2(sub_spectre)),
-                    )
-                del sub_spectre
+                np.save(
+                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy", lowres_img
+                )
+            del sub_spectre
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.
