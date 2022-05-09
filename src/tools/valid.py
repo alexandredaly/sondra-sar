@@ -1,7 +1,6 @@
 """This module define the function to visualise the images during training."""
 import torch
 import tqdm
-import random
 import numpy as np
 
 
@@ -24,8 +23,8 @@ def calculate_psnr(img1, img2, scale, border=0):
     if not img1.shape == img2.shape:
         raise ValueError("Input images must have the same dimensions.")
     h, w = img1.shape[2:]
-    img1 = img1[:, :, border : h - border, border : w - border]
-    img2 = img2[:, :, border : h - border, border : w - border]
+    img1 = img1[:, :, border : (h - border), border : (w - border)]
+    img2 = img2[:, :, border : (h - border), border : (w - border)]
 
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
