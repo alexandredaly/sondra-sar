@@ -25,7 +25,7 @@ import neptune.new as neptune
 from neptune.new.types import File
 
 
-def main(cfg, path_to_config):
+def main(cfg, path_to_config, runid):
     """Main pipeline to train a model
 
     Args:
@@ -101,7 +101,8 @@ def main(cfg, path_to_config):
 
     # Init directory to save model saving best models
     top_logdir = cfg["TRAIN"]["SAVE_MODEL_DIR"]
-    save_dir = generate_unique_logpath(top_logdir, cfg["MODEL"]["NAME"].lower())
+    save_dir = generate_unique_logpath(top_logdir, cfg["MODEL"]["NAME"].lower(), runid)
+
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
 
@@ -247,10 +248,18 @@ if __name__ == "__main__":
         default="./config.yaml",
         help="path to config file",
     )
+
+    parser.add_argument(
+        "--runid",
+        type=int,
+        required=False,
+        default=None,
+        help="Optional : a run id to suffix the logdirs",
+    )
     args = parser.parse_args()
 
     # Load config
     with open(args.path_to_config, "r") as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.CFullLoader)
 
-    main(cfg, args.path_to_config)
+    main(cfg, args.path_to_config, args.runid)

@@ -10,8 +10,7 @@ from tools.SSIMLoss import SSIMLoss
 
 class ModelCheckpoint:
 
-    """Define the model checkpoint class
-    """
+    """Define the model checkpoint class"""
 
     def __init__(self, dir_path, model, epochs, checkpoint_step):
         self.min_loss = None
@@ -146,7 +145,7 @@ def get_scheduler(cfg, optimizer):
         )
 
 
-def generate_unique_logpath(logdir, raw_run_name):
+def generate_unique_logpath(logdir, raw_run_name, runid=None):
     """Verify if the path already exist
 
     Args:
@@ -157,6 +156,13 @@ def generate_unique_logpath(logdir, raw_run_name):
         str: path to the output file
     """
     i = 0
+    if runid is not None:
+        run_name = f"{raw_run_name}-{runid}"
+        # If this is free , return it
+        log_path = os.path.join(logdir, run_name)
+        if not os.path.isdir(log_path):
+            return log_path
+    # Otherwise, loop to find a free name
     while True:
         run_name = raw_run_name + "_" + str(i)
         log_path = os.path.join(logdir, run_name)
@@ -165,7 +171,7 @@ def generate_unique_logpath(logdir, raw_run_name):
         i = i + 1
 
 
-def load_network(load_path, model,pretrained = False, strict=True, param_key="params"):
+def load_network(load_path, model, pretrained=False, strict=True, param_key="params"):
     """Function to load pretrained model or checkpoint
 
     Args:
@@ -179,20 +185,22 @@ def load_network(load_path, model,pretrained = False, strict=True, param_key="pa
         state_dict = torch.load(load_path)
         if param_key in state_dict.keys():
             state_dict = state_dict[param_key]
-        model.load_state_dict(state_dict,strict = strict)
+        model.load_state_dict(state_dict, strict=strict)
         del state_dict
     else:
         state_dict_old = torch.load(load_path)
         if param_key in state_dict_old.keys():
             state_dict_old = state_dict_old[param_key]
         # Compute weights mean of the first conv layer to go from 3 channel to 1 channel
-        if pretrained and 'conv_first.weight' in state_dict_old.keys():
-            state_dict_old['conv_first.weight'] = torch.mean(state_dict_old['conv_first.weight'],1, True)
-        # Init New dict    
+        if pretrained and "conv_first.weight" in state_dict_old.keys():
+            state_dict_old["conv_first.weight"] = torch.mean(
+                state_dict_old["conv_first.weight"], 1, True
+            )
+        # Init New dict
         state_dict = model.state_dict()
         # Some weights cannot be processed because they depend on the input channel value
-        for key,value in state_dict_old.items():
+        for key, value in state_dict_old.items():
             if state_dict[key].shape == value.shape:
-                state_dict.update({key:value})
+                state_dict.update({key: value})
         model.load_state_dict(state_dict, strict=strict)
         del state_dict_old, state_dict
