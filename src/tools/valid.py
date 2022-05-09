@@ -32,7 +32,7 @@ def calculate_psnr(img1, img2, scale, border=0):
     mse = np.mean((img1 - img2) ** 2, axis=(2, 3))
     mse[mse == 0] = float("inf")
 
-    return np.mean(10 * np.log10(scale ** 2 / mse))
+    return np.mean(10 * np.log10(scale**2 / mse))
 
 
 def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
