@@ -1,15 +1,15 @@
+import datetime
 import torch
 import torchvision.transforms as transforms
-import tqdm
 import numpy as np
+import joblib
 
 from data.SARdataset import SARdataset
-from data.utils import plot_hist, augment_img
+from data.utils import augment_img
 
 
 class DatasetTransformer(torch.utils.data.Dataset):
-    """Apply transformation to a torch Dataset
-    """
+    """Apply transformation to a torch Dataset"""
 
     def __init__(self, base_dataset, transform, augment=False, test=False):
         """Initialize DatasetTransformer class
@@ -46,14 +46,20 @@ def get_max(loader):
     Get the max pixel value of the whole dataset
     """
     # Init max
-    maxi = -np.inf
+    # maxi = -np.inf
     # Loop over the dataset
     print("####################################################")
     print("####### COMPUTE MAX OVER THE WHOLE DATASET #########")
-    for imgs, _ in tqdm.tqdm(loader):
-        candidate = np.max(imgs)
-        if candidate > maxi:
-            maxi = candidate
+    # for imgs, _ in tqdm.tqdm(loader):
+    #     candidate = joblib.delay(np.max)(imgs) for (imgs, _) in loader)
+    #     if candidate > maxi:
+    #         maxi = candidate
+    print(str(datetime.datetime.now()))
+    maxi = max(
+        joblib.Parallel(n_jobs=-2)(joblib.delayed(np.max)(imgs) for (imgs, _) in loader)
+    )
+    print(str(datetime.datetime.now()))
+
     print(f"######### Max = {maxi} db has been saved #########")
     print("#############################################################")
     return maxi
@@ -61,7 +67,7 @@ def get_max(loader):
 
 def create_dataset(cfg):
     """Function to create datasets torchget_max
-        torch.dataset: validation and train sets
+    torch.dataset: validation and train sets
     """
 
     # Get the validation ratio from the config.yaml file
@@ -98,7 +104,13 @@ def create_dataset(cfg):
                         max=cfg["DATASET"]["CLIP"]["MAX"],
                     )
                 ),
-                transforms.Lambda(lambda x : x if not cfg["TRAIN"]["LOSS"]["NAME"]=="SSIM" else x/(cfg["DATASET"]["CLIP"]["MAX"]-cfg["DATASET"]["CLIP"]["MIN"])+1),
+                transforms.Lambda(
+                    lambda x: x
+                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                    else x
+                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                    + 1
+                ),
                 transforms.Lambda(
                     lambda x: x.expand(3, -1, -1)
                     if cfg["DATASET"]["IN_CHANNELS"] == 3
@@ -121,7 +133,13 @@ def create_dataset(cfg):
                         max=cfg["DATASET"]["CLIP"]["MAX"],
                     )
                 ),
-                transforms.Lambda(lambda x : x if not cfg["TRAIN"]["LOSS"]["NAME"]=="SSIM" else x/(cfg["DATASET"]["CLIP"]["MAX"]-cfg["DATASET"]["CLIP"]["MIN"])+1),
+                transforms.Lambda(
+                    lambda x: x
+                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                    else x
+                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                    + 1
+                ),
                 transforms.Lambda(
                     lambda x: x.expand(3, -1, -1)
                     if cfg["DATASET"]["IN_CHANNELS"] == 3
@@ -135,7 +153,7 @@ def create_dataset(cfg):
 
 
 def create_dataloader(cfg, train_dataset, valid_dataset):
-    """ Generate torch loader from torch datasets
+    """Generate torch loader from torch datasets
 
     Args:
         cfg (dic): config
