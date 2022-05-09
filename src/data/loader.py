@@ -2,6 +2,7 @@ import datetime
 import torch
 import torchvision.transforms as transforms
 import numpy as np
+import pathlib
 import joblib
 
 from data.SARdataset import SARdataset
@@ -77,10 +78,15 @@ def create_dataset(cfg):
     train_valid_dataset = SARdataset(cfg["TRAIN_DATA_DIR"])
 
     # Get dataset maximum
-    maxi = get_max(train_valid_dataset)
-
-    # Store max value of preprocessed dataset
-    np.save("./data/dataset_maximum.npy", maxi)
+    if cfg["TRAIN"]["DATA"]["COMPUTE_MAX"]:
+        maxi = get_max(train_valid_dataset)
+        # Store max value of preprocessed dataset
+        np.save(cfg["TRAIN"]["DATA"]["MAXIFILE"], maxi)
+    else:
+        print("Loading a precomputed max")
+        assert pathlib.Path(cfg["TRAIN"]["DATA"]["MAXIFILE"]).exists()
+        maxi = np.load(cfg["TRAIN"]["DATA"]["MAXIFILE"])
+        print(f"######### Max = {maxi} db has been loaded #########")
 
     # Split it into training and validation sets
     nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
