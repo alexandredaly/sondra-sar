@@ -44,6 +44,10 @@ def main(cfg, path_to_config):
 
     # TODO: Check what is depths and HEAD in SwinTransformers
 
+    run = neptune.init(
+        project="Sondra-SAR", api_token=cfg["TRAIN"]["NEPTUNE_API_TOKEN"]
+    )
+
     # Log Neptune config & pararameters
     params = {
         "im_size": cfg["DATASET"]["IMAGE_SIZE"],
@@ -116,7 +120,15 @@ def main(cfg, path_to_config):
         print("EPOCH : {}".format(epoch))
 
         if epoch == 0:
-            valid_loss, psnr, input_image, restored_images, target_images, l1_loss, l2_loss = valid_one_epoch(
+            (
+                valid_loss,
+                psnr,
+                input_image,
+                restored_images,
+                target_images,
+                l1_loss,
+                l2_loss,
+            ) = valid_one_epoch(
                 model,
                 valid_loader,
                 f_loss,
@@ -160,7 +172,15 @@ def main(cfg, path_to_config):
             model.apply(regularizer_clip)
 
         # Validation
-        valid_loss, psnr, input_image, restored_images, target_images, l1_loss, l2_loss = valid_one_epoch(
+        (
+            valid_loss,
+            psnr,
+            input_image,
+            restored_images,
+            target_images,
+            l1_loss,
+            l2_loss,
+        ) = valid_one_epoch(
             model,
             valid_loader,
             f_loss,
@@ -216,12 +236,6 @@ def main(cfg, path_to_config):
 
 
 if __name__ == "__main__":
-
-    run = neptune.init(
-        project="Sondra-SAR",
-        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwNjlkNzk3NC1iYTU5LTRlM2EtOTk4NS0yNGEwMDBmZDE1NWUifQ==",
-    )
-
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 

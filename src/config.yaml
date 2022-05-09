@@ -40,6 +40,7 @@ TRAIN:
   EPOCH: 50
   TENSORBOARD_DIR: 'tensorboard/'
   SAVE_MODEL_DIR: '../trained_models'
+  NEPTUNE_API_TOKEN: 'eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhNWNmZjViYS0zZDFkLTQ3ZGYtYmMzYi0yN2U1M2IxMWE0OTYifQ=='
 INFERENCE:
   PATH_TO_MODEL: '../model_zoo/swinir/002_lightweightSR_DIV2K_s64w8_SwinIR-S_x2.pth'
   PATH_TO_IMAGES: '../data/data_files/test/low_resolution'
