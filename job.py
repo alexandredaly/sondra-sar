@@ -44,6 +44,7 @@ python -m pip install -r requirements.txt
 
 date
 echo "Training"
+cd src/
 python train.py --path_to_config ../tmpconfig/config-{commit_id}.yaml --runid $SLURM_JOBID
 
 if [[ $? != 0 ]]; then
