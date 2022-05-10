@@ -15,6 +15,10 @@ def makejob(commit_id):
 #SBATCH --output=logslurms/slurm-%j.out
 #SBATCH --error=logslurms/slurm-%j.err
 
+# Fix env variables as bashrc and profile are not loaded
+export LOCAL=$HOME/.local
+export PATH=$PATH:$LOCAL/bin
+
 current_dir=`pwd`
 
 echo "Session with job_id ${{SLURM_JOBID}}"
@@ -33,13 +37,14 @@ git checkout {commit_id}
 date
 echo "Setting up the virtual environment"
 python3 -m pip install virtualenv --user
+
 virtualenv -p python3 venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
 
 date
 echo "Training"
-python3 train.py --path_to_config ../tmpconfig/config-{commit_id}.yaml --runid $SLURM_JOBID
+python train.py --path_to_config ../tmpconfig/config-{commit_id}.yaml --runid $SLURM_JOBID
 
 if [[ $? != 0 ]]; then
     exit -1
