@@ -43,7 +43,7 @@ class Uavsar_slc_stack_1x1:
         self.path = cfg["RAW_DATA_DIR"]  # folder of SAR data
         self.meta_data = {}  # all images metadata
         # self.llh_grid = {}     # not used now
-        self.slc_data = {}  # SAR images
+        self.slc_data = {}  # SAR images name per identifier
         self.subband_header = {}  # Characteristics for subband processing
         self.count = 0
         self.path_to_save = cfg["TRAIN_DATA_DIR"]
@@ -163,13 +163,12 @@ class Uavsar_slc_stack_1x1:
                 temp_array = self.construct_cropped_image_from_slc(
                     shape, crop, data_path
                 )
-                self.slc_data[file_name] = [temp_array]
-                np.save(
-                    f"{self.path_to_inf_image}/high_resolution/{file_name[:-4]}.npy",
-                    np.abs(temp_array),
-                )
-                del temp_array
 
+                name_array = f"{self.path_to_inf_image}/high_resolution/{file_name[:-4]}.npy"
+
+                np.save(name_array, np.abs(temp_array))
+                del temp_array
+                self.slc_data[file_name] = name_array
             # If crop is an int, breaks the image into several subimages of size crop and save them.
             elif isinstance(crop, int):
                 self.slc_data[file_name] = []
@@ -182,11 +181,9 @@ class Uavsar_slc_stack_1x1:
                             temp_array = self.construct_cropped_image_from_slc(
                                 shape, [previous_l, l, previous_m, m], data_path
                             )
-                            self.slc_data[file_name].append(temp_array)
-                            np.save(
-                                f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{count}.npy",
-                                np.abs(temp_array),
-                            )
+                            name_array = f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{round(previous_l)}_{round(previous_m)}.npy"
+                            np.save(name_array, np.abs(temp_array))
+                            self.slc_data[file_name].append(name_array)
                             if count % 10 == 0:
                                 print(
                                     f"{count} high resolution generated from {file_name}"
@@ -260,6 +257,8 @@ class Uavsar_slc_stack_1x1:
             * crop = [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1], a list of int, to read a portion of the image, it reads the whole image if None.
             * method = "stretch" or "equal", based from histogram equalization, see https://scikit-image.org/docs/dev/auto_examples/color_exposure/plot_equalize.html
             * all = True for plotting all data in self.data, False for plotting the 1st data
+
+            TODO: slc_data is now a file name not the data itself
         """
         print(self.slc_data, "slc")
         if bool(self.slc_data):
@@ -281,14 +280,20 @@ class Uavsar_slc_stack_1x1:
             raise KeyError("Empty dictionary")
 
     def subband_process(self, identifier, downscale_factor=2, decimation=True, wd=None):
-        """A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain
+        """A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain in order to obtain low resolution image.
+        (Need high resolution images file name in self.slc_data)
         Inputs:
-            *identifier -> self.slc_data.keys() to select the data
+            *identifier -> self.slc_data.keys() to select the data name
             *decimation = True to halve pixels numbers for each dimension
                         = False to keep the same but using zero padding method
             *wd         = choose window to mitigate secondary lobes see help(window) for windows option
             *
+        To mitigate sidelobes effect, advice to do fft on the whole image
         """
+
+        if identifier not in self.slc_data.keys():
+            raise KeyError("High resolution images does not exist")
+
 
         RgCnt = self.subband_header[identifier]["RgCnt"]
         AzCnt = self.subband_header[identifier]["AzCnt"]
@@ -301,8 +306,8 @@ class Uavsar_slc_stack_1x1:
             RgCnt = crop[3] - crop[2]  # Update the Azimuth & Range count if crop
             AzCnt = crop[1] - crop[0]
 
-        elif isinstance(crop, int):
-            RgCnt, AzCnt = crop, crop  # Update the Azimuth & Range count if crop
+        # elif isinstance(crop, int):
+        #     RgCnt, AzCnt = crop, crop  # Update the Azimuth & Range count if crop
 
         SarRange = self.subband_header[identifier]["RgPixelSz"] * np.arange(
             -RgCnt / 2, RgCnt / 2
@@ -314,6 +319,8 @@ class Uavsar_slc_stack_1x1:
         # spatial grid
 
         (RRange, AAzimuth) = np.meshgrid(SarRange, SarAzimuth)
+
+        del SarRange, SarAzimuth
 
         # krange and kazimuth spectral dual variables
 
@@ -343,6 +350,17 @@ class Uavsar_slc_stack_1x1:
         frequence = np.sqrt(KKrange**2 + KKazimuth**2)
         theta = np.arctan2(KKazimuth, KKrange)
 
+        del KKrange, KKazimuth
+
+        # Add an offset in the dual space (SAR process) ~ (FFT shift)
+
+        data = self.construct_cropped_image_from_slc((AzCnt, RgCnt), None,  os.path.join(self.path, identifier))
+
+        data = data * np.exp(
+            -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
+            dtype=np.complex64,
+        )
+
         f_min = frequence.min()
         f_max = frequence.max()
         theta_min = theta.min()
@@ -356,80 +374,98 @@ class Uavsar_slc_stack_1x1:
         # frequence centrale de la bande
         theta_centre = (theta_max + theta_min) / 2  # angule central de la bande
 
+        spectre = np.fft.fft2(data)
+
+        del data
+
+
         # Boolean filter (Centered)
         Filter = (np.abs(frequence - f_centre) <= sigma_f / 3) * (
             abs(theta - theta_centre) <= sigma_t / 3
         )
 
-        # Add an offset in the dual space (SAR process) ~ (FFT shift)
-        # slc_data[file_name] contains all the high resolution subimages
-        for i, data in enumerate(self.slc_data[identifier]):
-            data = data * np.exp(
-                -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
-                dtype=np.complex64,
-            )
-            if i % 10 == 0:
-                print(f"{i} degraded images generated")
-            #TODO: The FFT is performed on the cropped image and this is not
-            #      the large SLC that is fft-ed then cropped
-            spectre = np.fft.fft2(data)
+        sub_spectre = Filter * spectre
 
-            sub_spectre = Filter * spectre
+        del spectre
 
-            # # # Checking spetral information
-            #
-            # self.plot_amp_img(spectre)
+        # # # Checking spetral information
+        #
+        # self.plot_amp_img(spectre)
+        # self.plot_amp_img(sub_spectre)
+
+        if decimation:
+            # Décimation par 2 de chaque dim, crop central
+            div = downscale_factor * 2
+            # WARNING : the code below may need to be adapted
+            # if downscale_factor is not 2 !!!
+            assert downscale_factor == 2
+
+            sub_spectre = sub_spectre[
+                sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
+                sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
+            ]
             # self.plot_amp_img(sub_spectre)
 
+        if wd is not None:
+            # TODO: Cheng : to be improved ? because a windowing is already
+            # applied on the large SLC image
+            sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
+
+
+
+        lowres_img = np.abs(np.fft.ifft2(sub_spectre))
+
+        del sub_spectre
+
+        if isinstance(crop, list):
+            np.save(
+                f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy", lowres_img
+            )
+        else:
+
             if decimation:
-                # Décimation par 2 de chaque dim, crop central
-                div = downscale_factor * 2
-                # WARNING : the code below may need to be adapted
-                # if downscale_factor is not 2 !!!
-                assert downscale_factor == 2
+                # Careful about decimation
+                crop_low = crop // downscale_factor
 
-                sub_spectre = sub_spectre[
-                    sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
-                    sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
-                ]
-                # self.plot_amp_img(sub_spectre)
-
-            if wd is not None:
-                # TODO: Cheng : to be improved ? because a windowing is already
-                # applied on the large SLC image
-                sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
-
-            lowres_img = np.abs(np.fft.ifft2(sub_spectre)
-            if isinstance(crop, list):
-                np.save(
-                    f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy", lowres_img
-                )
+                for name in self.slc_data[identifier]:
+                    previous_l = int(name[:-4].split('_')[-2])//downscale_factor
+                    previous_m = int(name[:-4].split('_')[-1])//downscale_factor
+                    np.save(name.replace('high_resolution', 'low_resolution'), lowres_img[previous_l:previous_l+crop_low, previous_m:previous_m+crop_low]
+                            )
             else:
-                np.save(
-                    f"{self.path_to_save}/low_resolution/{identifier[:-4]}_{i}.npy", lowres_img
-                )
-            del sub_spectre
+
+                for name in self.slc_data[identifier]:
+                    previous_l = int(name[:-4].split('_')[-2])
+                    previous_m = int(name[:-4].split('_')[-1])
+                    np.save(name.replace('high_resolution', 'low_resolution'), lowres_img[previous_l:previous_l+crop, previous_m:previous_m+crop]
+                            )
+
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.
         Args:
             shape (np.array): the shape of the SAR image (azimut, range)
-            crop (list): the size of the crop. [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1]
+            crop : if list, the size of the crop [lowerIndex axis 0, UpperIndex axis 0, lowerIndex axis 1, UpperIndex axis 1] ; if None, the whole image.
             data_path (string): path to load the slc file
 
         Returns:
             np.array: portion of the image as a numpy array
         """
+        if crop:
 
-        temp_array = np.zeros(
-            (crop[1] - crop[0], crop[3] - crop[2]), dtype=np.complex64
-        )
-        with open(data_path, "rb") as f:
-            f.seek((crop[0] * shape[1] + crop[2]) * 8, os.SEEK_SET)
-            for row in range(crop[1] - crop[0]):
-                temp_array[row, :] = np.fromfile(
-                    f, dtype=np.complex64, count=crop[3] - crop[2]
-                )
-                f.seek(((crop[0] + row) * shape[1] + crop[2]) * 8, os.SEEK_SET)
+            temp_array = np.zeros(
+                (crop[1] - crop[0], crop[3] - crop[2]), dtype=np.complex64
+            )
+            with open(data_path, "rb") as f:
+                f.seek((crop[0] * shape[1] + crop[2]) * 8, os.SEEK_SET)
+                for row in range(crop[1] - crop[0]):
+                    temp_array[row, :] = np.fromfile(
+                        f, dtype=np.complex64, count=crop[3] - crop[2]
+                    )
+                    f.seek(((crop[0] + row) * shape[1] + crop[2]) * 8, os.SEEK_SET)
+        else:
+
+            temp_array = np.fromfile(data_path, dtype=np.complex64)
+            temp_array = temp_array.reshape(shape)
 
         return temp_array
