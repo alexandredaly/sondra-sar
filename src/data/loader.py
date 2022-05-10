@@ -181,9 +181,11 @@ def create_dataloader(cfg, train_dataset, valid_dataset):
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_dataset,
         batch_size=cfg["DATASET"]["BATCH_SIZE"],
-        shuffle=False,
+        shuffle=False,  # IMPORTANT : keep that false
         num_workers=cfg["DATASET"]["NUM_THREADS"],
     )
+    # You need to keep shuffle=false because otherwise will lead to
+    # misleading interpretation of the metrics in the dashboard
 
     return train_loader, valid_loader
 
