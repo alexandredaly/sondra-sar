@@ -20,9 +20,8 @@ def makejob(commit_id):
 #SBATCH --output=logslurms/slurm-%j.out
 #SBATCH --error=logslurms/slurm-%j.err
 
-# Fix env variables as bashrc and profile are not loaded
-export LOCAL=$HOME/.local
-export PATH=$PATH:$LOCAL/bin
+# Load the conda module
+export PATH=/opt/conda/bin:$PATH
 
 current_dir=`pwd`
 
@@ -38,14 +37,9 @@ echo "Checking out the correct version of the code commit_id {commit_id}"
 cd $TMPDIR/SAR/
 git checkout {commit_id}
 
-
 date
 echo "Setting up the virtual environment"
-python3 -m pip install virtualenv --user
-
-virtualenv -p python3 venv
-source venv/bin/activate
-python -m pip install -r requirements.txt
+source activate sondraSAR
 
 date
 echo "Training"
