@@ -52,8 +52,6 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
 
         n_samples = 0
         tot_loss = 0.0
-        restored_images = None
-        target_images = None
         avg_psnr = 0
 
         for low, high in tqdm.tqdm(loader):
@@ -61,7 +59,6 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
 
             # Compute the forward pass through the network up to the loss
             outputs = model(low)
-            loss = loss_weight * f_loss(outputs, high)
             l1_loss = torch.nn.functional.l1_loss(outputs, high)
             l2_loss = torch.nn.functional.mse_loss(outputs, high)
             n_samples += low.shape[0]
@@ -72,7 +69,7 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
 
         return (
             tot_loss / n_samples,
-            psnr / n_samples,
+            avg_psnr / n_samples,
             np.mean(low[0].cpu().numpy(), axis=0),
             np.mean(outputs[0].cpu().numpy(), axis=0),
             np.mean(high[0].cpu().numpy(), axis=0),
