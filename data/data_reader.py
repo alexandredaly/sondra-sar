@@ -25,6 +25,7 @@ import os
 import fnmatch
 import yaml
 import numpy as np
+import tqdm
 import matplotlib.pyplot as plt
 
 # Need to install scikit-image to use the following modules
@@ -164,7 +165,9 @@ class Uavsar_slc_stack_1x1:
                     shape, crop, data_path
                 )
 
-                name_array = f"{self.path_to_inf_image}/high_resolution/{file_name[:-4]}.npy"
+                name_array = (
+                    f"{self.path_to_inf_image}/high_resolution/{file_name[:-4]}.npy"
+                )
 
                 np.save(name_array, np.abs(temp_array))
                 del temp_array
@@ -294,7 +297,6 @@ class Uavsar_slc_stack_1x1:
         if identifier not in self.slc_data.keys():
             raise KeyError("High resolution images does not exist")
 
-
         RgCnt = self.subband_header[identifier]["RgCnt"]
         AzCnt = self.subband_header[identifier]["AzCnt"]
         crop = self.subband_header[identifier]["Crop"]
@@ -318,6 +320,7 @@ class Uavsar_slc_stack_1x1:
 
         # spatial grid
 
+        print("Spatial meshgrid computation")
         (RRange, AAzimuth) = np.meshgrid(SarRange, SarAzimuth)
 
         del SarRange, SarAzimuth
@@ -345,6 +348,7 @@ class Uavsar_slc_stack_1x1:
         # fcos(theta) = krange & fsin(theta) = kazimuth
 
         # Spectral grid
+        print("Spectral meshgrid computation")
         (KKrange, KKazimuth) = np.meshgrid(krange, kazimuth)
 
         frequence = np.sqrt(KKrange**2 + KKazimuth**2)
@@ -354,8 +358,12 @@ class Uavsar_slc_stack_1x1:
 
         # Add an offset in the dual space (SAR process) ~ (FFT shift)
 
-        data = self.construct_cropped_image_from_slc((AzCnt, RgCnt), None,  os.path.join(self.path, identifier))
+        print("SLC reading")
+        data = self.construct_cropped_image_from_slc(
+            (AzCnt, RgCnt), None, os.path.join(self.path, identifier)
+        )
 
+        print("Offset")
         data = data * np.exp(
             -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
             dtype=np.complex64,
@@ -374,16 +382,17 @@ class Uavsar_slc_stack_1x1:
         # frequence centrale de la bande
         theta_centre = (theta_max + theta_min) / 2  # angule central de la bande
 
+        print("Computing the spectrum")
         spectre = np.fft.fft2(data)
 
         del data
-
 
         # Boolean filter (Centered)
         Filter = (np.abs(frequence - f_centre) <= sigma_f / 3) * (
             abs(theta - theta_centre) <= sigma_t / 3
         )
 
+        print("Filtering")
         sub_spectre = Filter * spectre
 
         del spectre
@@ -411,15 +420,15 @@ class Uavsar_slc_stack_1x1:
             # applied on the large SLC image
             sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
 
-
-
+        print("Computing the low resolution image")
         lowres_img = np.abs(np.fft.ifft2(sub_spectre))
 
         del sub_spectre
 
         if isinstance(crop, list):
             np.save(
-                f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy", lowres_img
+                f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
+                lowres_img,
             )
         else:
 
@@ -427,19 +436,28 @@ class Uavsar_slc_stack_1x1:
                 # Careful about decimation
                 crop_low = crop // downscale_factor
 
-                for name in self.slc_data[identifier]:
-                    previous_l = int(name[:-4].split('_')[-2])//downscale_factor
-                    previous_m = int(name[:-4].split('_')[-1])//downscale_factor
-                    np.save(name.replace('high_resolution', 'low_resolution'), lowres_img[previous_l:previous_l+crop_low, previous_m:previous_m+crop_low]
-                            )
+                for name in tqdm.tqdm(self.slc_data[identifier]):
+                    previous_l = int(name[:-4].split("_")[-2]) // downscale_factor
+                    previous_m = int(name[:-4].split("_")[-1]) // downscale_factor
+                    np.save(
+                        name.replace("high_resolution", "low_resolution"),
+                        lowres_img[
+                            previous_l : previous_l + crop_low,
+                            previous_m : previous_m + crop_low,
+                        ],
+                    )
             else:
 
-                for name in self.slc_data[identifier]:
-                    previous_l = int(name[:-4].split('_')[-2])
-                    previous_m = int(name[:-4].split('_')[-1])
-                    np.save(name.replace('high_resolution', 'low_resolution'), lowres_img[previous_l:previous_l+crop, previous_m:previous_m+crop]
-                            )
-
+                for name in tqdm.tqdm(self.slc_data[identifier]):
+                    previous_l = int(name[:-4].split("_")[-2])
+                    previous_m = int(name[:-4].split("_")[-1])
+                    np.save(
+                        name.replace("high_resolution", "low_resolution"),
+                        lowres_img[
+                            previous_l : previous_l + crop,
+                            previous_m : previous_m + crop,
+                        ],
+                    )
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.

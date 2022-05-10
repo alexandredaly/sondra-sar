@@ -15,4 +15,5 @@ export PATH=/opt/conda/bin:$PATH
 source activate sondraSAR
 
 cd data
+rm -rf data_files/train
 python3 dataset_builder.py --path_to_config ../config.yaml
