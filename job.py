@@ -3,9 +3,14 @@
 import os
 import sys
 import subprocess
+import pathlib
+
+
+SAVE_MODEL_DIR = pathlib.Path("./trained_models").resolve()
 
 
 def makejob(commit_id):
+    sys.exit(-1)
     return f"""#!/bin/bash 
 
 #SBATCH --job-name=super-SAR
@@ -93,7 +98,11 @@ if len(sys.argv) != 2:
 os.system("mkdir -p logslurms")
 os.system("mkdir -p tmpconfig")
 
-os.system(f"cp {sys.argv[1]} tmpconfig/config-{commit_id}.yaml")
+with open(f"{sys.argv[1]}") as f:
+    content = f.read()
+    content.replace("@SAVE_MODEL_DIR@", SAVE_MODEL_DIR)
+with open(f"./tmpconfig/config-{commit_id}.yaml") as f:
+    f.write(content)
 
 # Launch the batch jobs
 submit_job(makejob(commit_id))
