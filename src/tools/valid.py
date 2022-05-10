@@ -31,7 +31,7 @@ def calculate_psnr(img1, img2, scale, border=0):
     mse = np.mean((img1 - img2) ** 2, axis=(2, 3))
     mse[mse == 0] = float("inf")
 
-    return np.mean(10 * np.log10(scale**2 / mse))
+    return np.mean(10 * np.log10(scale**2 / mse))  # <=> 1/B * sum_i
 
 
 def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
@@ -52,6 +52,8 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
 
         n_samples = 0
         tot_loss = 0.0
+        tot_l1loss = 0.0
+        tot_l2loss = 0.0
         avg_psnr = 0
 
         for low, high in tqdm.tqdm(loader):
@@ -59,12 +61,21 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
 
             # Compute the forward pass through the network up to the loss
             outputs = model(low)
-            l1_loss = torch.nn.functional.l1_loss(outputs, high)
-            l2_loss = torch.nn.functional.mse_loss(outputs, high)
-            n_samples += low.shape[0]
-            tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
-            psnr = calculate_psnr(outputs.cpu().numpy(), high.cpu().numpy(), scale)
+            batch_size = low.shape[0]
+
+            l1_loss = torch.nn.functional.l1_loss(outputs, high, "sum")
+            tot_l1loss += l1_loss
+            l2_loss = torch.nn.functional.mse_loss(outputs, high, "sum")
+            tot_l2loss += l2_loss
+
+            n_samples += batch_size
+            tot_loss += batch_size * f_loss(outputs, high).item()
+
+            # We need to denormalize the PSNR to correctly average
+            psnr = batch_size * calculate_psnr(
+                outputs.cpu().numpy(), high.cpu().numpy(), scale
+            )
             avg_psnr += psnr
 
         return (
@@ -73,6 +84,6 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
             np.mean(low[0].cpu().numpy(), axis=0),
             np.mean(outputs[0].cpu().numpy(), axis=0),
             np.mean(high[0].cpu().numpy(), axis=0),
-            l1_loss,
-            l2_loss,
+            tot_l1loss / batch_size,
+            tot_l2loss / batch_size,
         )
