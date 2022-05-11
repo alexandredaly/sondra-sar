@@ -295,7 +295,8 @@ class Uavsar_slc_stack_1x1:
         """
 
         if identifier not in self.slc_data.keys():
-            raise KeyError("High resolution images do not exist")
+            print(f"Looking for identifier {identifier} in the keys {self.slc_data.keys()}")
+            raise KeyError("High resolution images does not exist")
 
         RgCnt = self.subband_header[identifier]["RgCnt"]
         AzCnt = self.subband_header[identifier]["AzCnt"]
