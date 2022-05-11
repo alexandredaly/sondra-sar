@@ -291,11 +291,11 @@ class Uavsar_slc_stack_1x1:
                         = False to keep the same but using zero padding method
             *wd         = choose window to mitigate secondary lobes see help(window) for windows option
             *
-        To mitigate sidelobes effect, advice to do fft on the whole image
+        To mitigate sidelobes effect, advice to do fft on the whole image before crop them into smaller images
         """
 
         if identifier not in self.slc_data.keys():
-            raise KeyError("High resolution images does not exist")
+            raise KeyError("High resolution images do not exist")
 
         RgCnt = self.subband_header[identifier]["RgCnt"]
         AzCnt = self.subband_header[identifier]["AzCnt"]
@@ -368,6 +368,8 @@ class Uavsar_slc_stack_1x1:
             -2 * np.pi * 1j * (RRange * krange.min() + AAzimuth * kazimuth.min()),
             dtype=np.complex64,
         )
+
+        del RRange, AAzimuth, krange, kazimuth
 
         f_min = frequence.min()
         f_max = frequence.max()
@@ -458,6 +460,7 @@ class Uavsar_slc_stack_1x1:
                             previous_m : previous_m + crop,
                         ],
                     )
+        del lowres_img
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.
