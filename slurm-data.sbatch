@@ -5,8 +5,8 @@
 
 #SBATCH --job-name=super-SAR-data
 #SBATCH --nodes=1
-#SBATCH --partition=gpu_prod_long
-#SBATCH --time=48:00:00
+#SBATCH --partition=cpu_prod
+#SBATCH --time=12:00:00
 #SBATCH --output=logslurms/slurm-data-%j.out
 #SBATCH --error=logslurms/slurm-data-%j.err
 
