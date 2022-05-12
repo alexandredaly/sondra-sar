@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=super-SAR-env
 #SBATCH --nodes=1
-#SBATCH --partition=gpu_prod_long
+#SBATCH --partition=cpu_prod
 #SBATCH --time=1:00:00
 #SBATCH --output=logslurms/slurm-conda-%j.out
 #SBATCH --error=logslurms/slurm-conda-%j.err
