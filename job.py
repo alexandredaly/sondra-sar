@@ -96,6 +96,7 @@ while True:
     config_path = config_path.resolve()
     if not config_path.exists():
         break
+    config_idx += 1
 
 with open(f"{sys.argv[1]}") as f:
     content = f.read()
