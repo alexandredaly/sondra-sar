@@ -59,19 +59,19 @@ def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
         for low, high in tqdm.tqdm(loader):
             low, high = low.to(device), high.to(device)
 
-            with torch.cuda.amp.autocast():
-                # Compute the forward pass through the network up to the loss
-                outputs = model(low)
+            # with torch.cuda.amp.autocast():
+            # Compute the forward pass through the network up to the loss
+            outputs = model(low)
 
-                batch_size = low.shape[0]
+            batch_size = low.shape[0]
 
-                l1_loss = torch.nn.functional.l1_loss(outputs, high, "sum")
-                tot_l1loss += l1_loss
-                l2_loss = torch.nn.functional.mse_loss(outputs, high, "sum")
-                tot_l2loss += l2_loss
+            l1_loss = torch.nn.functional.l1_loss(outputs, high, "sum")
+            tot_l1loss += l1_loss
+            l2_loss = torch.nn.functional.mse_loss(outputs, high, "sum")
+            tot_l2loss += l2_loss
 
-                n_samples += batch_size
-                tot_loss += batch_size * f_loss(outputs, high).item()
+            n_samples += batch_size
+            tot_loss += batch_size * f_loss(outputs, high).item()
 
             # We need to denormalize the PSNR to correctly average
             psnr = batch_size * calculate_psnr(
