@@ -17,6 +17,7 @@ def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipg
         tot_loss : computed loss over one epoch
     """
 
+    scaler = torch.cuda.amp.GradScaler()
     model.train()
 
     n_samples = 0
@@ -24,23 +25,29 @@ def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipg
 
     for low, high in tqdm.tqdm(loader):
         low, high = low.to(device), high.to(device)
-        # Compute the forward pass through the network up to the loss
-        outputs = model(low)
-        loss = loss_weight * f_loss(outputs, high)
+        with torch.cuda.amp.autocast():
+            # Compute the forward pass through the network up to the loss
+            outputs = model(low)
+            loss = loss_weight * f_loss(outputs, high)
 
         n_samples += low.shape[0]
         tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
         # Backward and optimize
         optimizer.zero_grad()
-        loss.backward()
+
+        # loss.backward()
 
         # clip_grad_norm helps prevent the exploding gradient problem
-        if clipgrad > 0:
-            torch.nn.utils.clip_grad_norm_(
-                model.parameters(), max_norm=clipgrad, norm_type=2
-            )
+        # if clipgrad > 0:
+        #     torch.nn.utils.clip_grad_norm_(
+        #         model.parameters(), max_norm=clipgrad, norm_type=2
+        #     )
 
-        optimizer.step()
+        # optimizer.step()
+
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
     return tot_loss / n_samples
