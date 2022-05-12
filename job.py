@@ -51,7 +51,7 @@ fi
 
 date
 echo "Clean up"
-rm -f $current_dir/tmpconfig/config-{commit_id}.yaml
+rm -f {config_path}
 
 
 """
