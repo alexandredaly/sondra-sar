@@ -92,7 +92,7 @@ os.system("mkdir -p tmpconfig")
 
 config_idx = 0
 while True:
-    config_path = pathlib.Path("./tmpconfig") / f"config-{config_idx}.yaml")
+    config_path = pathlib.Path("./tmpconfig") / f"config-{config_idx}.yaml"
     config_path = config_path.resolve()
     if not config_path.exists():
         break
