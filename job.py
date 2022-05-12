@@ -94,7 +94,7 @@ os.system("mkdir -p tmpconfig")
 
 with open(f"{sys.argv[1]}") as f:
     content = f.read()
-    content.replace("@SAVE_MODEL_DIR@", SAVE_MODEL_DIR.str())
+    content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
 with open(f"./tmpconfig/config-{commit_id}.yaml") as f:
     f.write(content)
 
