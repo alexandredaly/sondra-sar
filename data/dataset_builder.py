@@ -8,10 +8,15 @@ from data_reader import Uavsar_slc_stack_1x1
 
 def build_dataset(cfg):
     # Create directory for saving training images
-    if not os.path.isdir(cfg["TRAIN_DATA_DIR"]):
-        os.mkdir(cfg["TRAIN_DATA_DIR"])
-        os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], "low_resolution"))
-        os.mkdir(os.path.join(cfg["TRAIN_DATA_DIR"], "high_resolution"))
+    datadir = pathlib.Path(cfg["TRAIN_DATA_DIR"])
+    if not datadir.exists():
+        datadir.mkdir()
+    lowres_datadir = datadir / "low_resolution"
+    if not lowres_datadir.exists():
+        lowres_datadir.mkdir()
+    highres_datadir = datadir / "high_resolution"
+    if not highres_datadir.exists():
+        highres_datadir.mkdir()
 
     # Init data reader
     sardata = Uavsar_slc_stack_1x1(cfg)
@@ -23,7 +28,8 @@ def build_dataset(cfg):
     for identifier in sardata.meta_data:
         # Build the training set
         print(f"Globing for {identifier}*_1x1.slc in {datapath}")
-        for filepath in datapath.glob(f"{identifier}*"):
+        print(list(datapath.glob(f"{identifier}*.slc")))
+        for filepath in datapath.glob(f"{identifier}*.slc"):
             # Get the segment number
             sstr = filepath.name.split("_")[-2]  # should s1 or s2, or ...
             seg = int(sstr[1:])
