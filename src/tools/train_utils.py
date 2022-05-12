@@ -70,7 +70,7 @@ def get_model(cfg, pretrained=False):
         )
 
     elif cfg["MODEL"]["NAME"] == "SRCNN":
-        return SRCNN()
+        return SRCNN(cfg["MODEL"]["SRCNN"])
 
     elif cfg["MODEL"]["NAME"] == "SomethingElse":
         return None
