@@ -43,6 +43,18 @@ cd data
 python3 dataset_builder.py --path_to_config ../src/config.yaml
 ```
 
+on a SLURM cluster, you first need to create a conda virtual env with the correct dependencies 
+
+```
+sbatch slurm-conda-setup.sbatch
+```
+
+and then compute the dataset with: 
+
+```
+sbatch slurm-data.sbatch
+```
+
 The generated data will be stored in the data_files/train folder.
 The directory structure of your data folder should look like this
 ```
@@ -69,6 +81,15 @@ cd src
 python3 train.py --path_to_config ./config.yaml
 ```
 To monitor the training, check the following link : https://app.neptune.ai/youssefadarrab/Sondra-SAR/experiments?split=tbl&dash=charts&viewId=standard-view
+
+
+On a slurm cluster, you can use the `job.py` script to launch a training. I advise you to copy the `src/config.yaml` at
+the root dir of your repository, replace the SAVE_MODEL_DIR variable with : SAVE_MODEL_DIR: '@SAVE_MODEL_DIR@'` and then
+trigger a train with :
+
+```
+python job.py config.yaml
+```
 
 # Les participants
 
