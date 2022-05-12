@@ -10,7 +10,6 @@ SAVE_MODEL_DIR = pathlib.Path("./trained_models").resolve()
 
 
 def makejob(commit_id):
-    sys.exit(-1)
     return f"""#!/bin/bash 
 
 #SBATCH --job-name=super-SAR
@@ -25,7 +24,7 @@ export PATH=/opt/conda/bin:$PATH
 
 current_dir=`pwd`
 
-echo "Session with job_id ${{SLURM_JOBID}}"
+echo "Session with job_id ${{SLURM_JOBID}} and hostname $(hostname)"
 
 date
 echo "Copying the source directory and data"
@@ -87,16 +86,16 @@ if len(sys.argv) != 2:
     print(f"Usage: {sys.argv[0]} path_to_config.yaml")
     sys.exit(-1)
 
-
 # Ensure the log directory exists
 os.system("mkdir -p logslurms")
 os.system("mkdir -p tmpconfig")
 
 with open(f"{sys.argv[1]}") as f:
     content = f.read()
-    content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
-with open(f"./tmpconfig/config-{commit_id}.yaml") as f:
+    content = content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
+with open(f"./tmpconfig/config-{commit_id}.yaml", "w") as f:
     f.write(content)
+print(f"Config file saved as ./tmpconfig/config-{commit_id}.yaml")
 
 # Launch the batch jobs
 submit_job(makejob(commit_id))
