@@ -29,9 +29,9 @@ def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipg
             # Compute the forward pass through the network up to the loss
             outputs = model(low)
             loss = loss_weight * f_loss(outputs, high)
+            tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
         n_samples += low.shape[0]
-        tot_loss += low.shape[0] * f_loss(outputs, high).item()
 
         # Backward and optimize
         optimizer.zero_grad()
