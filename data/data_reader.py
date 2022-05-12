@@ -177,24 +177,23 @@ class Uavsar_slc_stack_1x1:
                 self.slc_data[file_name] = []
                 count = 0
                 previous_l = 0
-                for l in range(0, shape[0], crop):
-                    previous_m = 0
-                    for m in range(0, shape[1], crop):
-                        if previous_m < m and previous_l < l:
-                            temp_array = self.construct_cropped_image_from_slc(
-                                shape, [previous_l, l, previous_m, m], data_path
-                            )
-                            name_array = f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{round(previous_l)}_{round(previous_m)}.npy"
-                            np.save(name_array, np.abs(temp_array))
-                            self.slc_data[file_name].append(name_array)
-                            if count % 10 == 0:
-                                print(
-                                    f"{count} high resolution generated from {file_name}"
+                with tqdm.tqdm(
+                    total=len(range(0, shape[0], crop)) * len(range(0, shape[1], crop))
+                ) as pbar:
+                    for l in range(0, shape[0], crop):
+                        previous_m = 0
+                        for m in range(0, shape[1], crop):
+                            if previous_m < m and previous_l < l:
+                                temp_array = self.construct_cropped_image_from_slc(
+                                    shape, [previous_l, l, previous_m, m], data_path
                                 )
-                            count += 1
-                            del temp_array
-                        previous_m = m
-                    previous_l = l
+                                name_array = f"{self.path_to_save}/high_resolution/{file_name[:-4]}_{round(previous_l)}_{round(previous_m)}.npy"
+                                np.save(name_array, np.abs(temp_array))
+                                self.slc_data[file_name].append(name_array)
+                                pbar.update(1)
+                                del temp_array
+                            previous_m = m
+                        previous_l = l
 
     def plot_amp_img(self, cplx_image):
         """This method plots the magnitude of the images
