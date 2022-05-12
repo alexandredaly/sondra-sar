@@ -1,6 +1,7 @@
 import os
 import yaml
 import argparse
+import pathlib
 
 from data_reader import Uavsar_slc_stack_1x1
 
@@ -18,10 +19,11 @@ def build_dataset(cfg):
 
     # Read all sar data
     print(5)
-    datapath = pathlib.Path(cfg["TRAIN_DATA_DIR"])
+    datapath = pathlib.Path(cfg["RAW_DATA_DIR"])
     for identifier in sardata.meta_data:
         # Build the training set
-        for filepath in datapath.glob(f"{identifier}*_1x1.slc"):
+        print(f"Globing for {identifier}*_1x1.slc in {datapath}")
+        for filepath in datapath.glob(f"{identifier}*"):
             # Get the segment number
             sstr = filepath.name.split("_")[-2]  # should s1 or s2, or ...
             seg = int(sstr[1:])
