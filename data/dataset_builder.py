@@ -18,26 +18,20 @@ def build_dataset(cfg):
 
     # Read all sar data
     print(5)
+    datapath = pathlib.Path(cfg["TRAIN_DATA_DIR"])
     for identifier in sardata.meta_data:
-        print(identifier)
         # Build the training set
-        for seg in range(1, 8):
-            try:
-                sardata.read_data(identifier, seg, crop=cfg["DATASET"]["IMAGE_SIZE"])
-                sardata.subband_process(
-                    identifier + "_s{}_1x1.slc".format(seg),
-                    downscale_factor=cfg["DATASET"]["PREPROCESSING"][
-                        "DOWNSCALE_FACTOR"
-                    ],
-                    decimation=cfg["DATASET"]["PREPROCESSING"]["DECIMATION"],
-                    wd=cfg["DATASET"]["PREPROCESSING"]["WINDOW"],
-                )
-            except Exception as e:
-                print(
-                    e,
-                    f"Segment number {seg} can't be found for the {identifier} SLC image",
-                )
-                exit()
+        for filepath in datapath.glob(f"{identifier}*_1x1.slc"):
+            # Get the segment number
+            sstr = filepath.name.split("_")[-2]  # should s1 or s2, or ...
+            seg = int(sstr[1:])
+            sardata.read_data(identifier, seg, crop=cfg["DATASET"]["IMAGE_SIZE"])
+            sardata.subband_process(
+                f"{identifier}_s{seg}_1x1.slc",
+                downscale_factor=cfg["DATASET"]["PREPROCESSING"]["DOWNSCALE_FACTOR"],
+                decimation=cfg["DATASET"]["PREPROCESSING"]["DECIMATION"],
+                wd=cfg["DATASET"]["PREPROCESSING"]["WINDOW"],
+            )
 
 
 if __name__ == "__main__":
