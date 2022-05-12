@@ -47,6 +47,7 @@ def main(cfg, path_to_config, runid):
     run = neptune.init(
         project="Sondra-SAR", api_token=cfg["TRAIN"]["NEPTUNE_API_TOKEN"]
     )
+    print(f"Neptune id is : {run._id}")
 
     # Log Neptune config & pararameters
     params = {
