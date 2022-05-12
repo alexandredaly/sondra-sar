@@ -9,7 +9,7 @@ import pathlib
 SAVE_MODEL_DIR = pathlib.Path("./trained_models").resolve()
 
 
-def makejob(commit_id):
+def makejob(commit_id, config_path):
     return f"""#!/bin/bash 
 
 #SBATCH --job-name=super-SAR
@@ -43,7 +43,7 @@ source activate sondraSAR
 date
 echo "Training"
 cd src/
-python train.py --path_to_config ../tmpconfig/config-{commit_id}.yaml --runid $SLURM_JOBID
+python train.py --path_to_config {config_path} --runid $SLURM_JOBID
 
 if [[ $? != 0 ]]; then
     exit -1
@@ -90,12 +90,19 @@ if len(sys.argv) != 2:
 os.system("mkdir -p logslurms")
 os.system("mkdir -p tmpconfig")
 
+config_idx = 0
+while True:
+    config_path = pathlib.Path("./tmpconfig") / f"config-{config_idx}.yaml")
+    config_path = config_path.resolve()
+    if not config_path.exists():
+        break
+
 with open(f"{sys.argv[1]}") as f:
     content = f.read()
     content = content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
-with open(f"./tmpconfig/config-{commit_id}.yaml", "w") as f:
+with open(config_path, "w") as f:
     f.write(content)
-print(f"Config file saved as ./tmpconfig/config-{commit_id}.yaml")
+print(f"Config file saved as {config_path}")
 
 # Launch the batch jobs
-submit_job(makejob(commit_id))
+submit_job(makejob(commit_id, config_path))
