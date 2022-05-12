@@ -4,6 +4,7 @@ import argparse
 import torch
 import numpy as np
 from shutil import copyfile
+import torchinfo
 
 import data.loader as loader
 import matplotlib.pyplot as plt
@@ -79,7 +80,17 @@ def main(cfg, path_to_config, runid):
     model = get_model(cfg, pretrained=cfg["TRAIN"]["PRETRAINED"]["BOOL"])
     model = model.to(device)
 
-    print(model)
+    summary = torchinfo.summary(
+        model,
+        verbose=0,
+        input_size=(
+            cfg["DATASET"]["BATCH_SIZE"],
+            cfg["DATASET"]["IN_CHANNELS"],
+            cfg["DATASET"]["IMAGE_SIZE"],
+            cfg["DATASET"]["IMAGE_SIZE"],
+        ),
+    )
+    print(summary)
 
     # Load pre trained model parameters
     if cfg["TRAIN"]["PRETRAINED"]["BOOL"]:
