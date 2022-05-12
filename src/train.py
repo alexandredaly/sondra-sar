@@ -86,8 +86,8 @@ def main(cfg, path_to_config, runid):
         input_size=(
             cfg["DATASET"]["BATCH_SIZE"],
             cfg["DATASET"]["IN_CHANNELS"],
-            cfg["DATASET"]["IMAGE_SIZE"],
-            cfg["DATASET"]["IMAGE_SIZE"],
+            cfg["DATASET"]["IMAGE_SIZE"] / 2,
+            cfg["DATASET"]["IMAGE_SIZE"] / 2,
         ),
     )
     print(summary)
