@@ -255,7 +255,7 @@ def main(cfg, path_to_config, runid):
         plt.close()
 
         fig = plt.figure()
-        plt.hist(target_images - restored_images), bins=30)
+        plt.hist(target_images - restored_images, bins=30)
         run["logs/valid/batch/histograms_diff_target_restored"].log(fig)
         plt.close()
 
