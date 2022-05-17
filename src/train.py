@@ -64,7 +64,7 @@ def main(cfg, path_to_config, runid):
     }
 
     run["algorithm"] = cfg["MODEL"]["NAME"].lower()
-    run["config/yaml"] = open(path_to_config, "r").readlines()
+    run["config/yaml"] = "".join(open(path_to_config, "r").readlines())
     run["config/dataset/path"] = cfg["TRAIN_DATA_DIR"]
     run["config/params"] = params
 
