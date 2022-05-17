@@ -146,7 +146,6 @@ def main(cfg, path_to_config, runid):
         #         valid_loader,
         #         f_loss,
         #         device,
-        #         cfg["TRAIN"]["LOSS"]["WEIGHT"],
         #         cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
         #     )
         #     # Scatter all images with the same transformation
@@ -174,7 +173,6 @@ def main(cfg, path_to_config, runid):
             f_loss,
             optimizer,
             device,
-            cfg["TRAIN"]["LOSS"]["WEIGHT"],
             clipgrad=cfg["TRAIN"]["OPTIMIZER"]["CLIPGRAD"],
         )
 
@@ -198,7 +196,6 @@ def main(cfg, path_to_config, runid):
             valid_loader,
             f_loss,
             device,
-            cfg["TRAIN"]["LOSS"]["WEIGHT"],
             cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
         )
 

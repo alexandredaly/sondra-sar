@@ -3,7 +3,7 @@ import torch
 import tqdm
 
 
-def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipgrad=0):
+def train_one_epoch(model, loader, f_loss, optimizer, device, clipgrad=0):
     """Train the model for one epoch
 
     Args:
@@ -28,8 +28,8 @@ def train_one_epoch(model, loader, f_loss, optimizer, device, loss_weight, clipg
         # with torch.cuda.amp.autocast():
         # Compute the forward pass through the network up to the loss
         outputs = model(low)
-        loss = loss_weight * f_loss(outputs, high)
-        tot_loss += low.shape[0] * f_loss(outputs, high).item()
+        loss = f_loss(outputs, high)
+        tot_loss += low.shape[0] * loss.item()
 
         n_samples += low.shape[0]
 

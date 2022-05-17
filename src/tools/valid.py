@@ -34,7 +34,7 @@ def calculate_psnr(img1, img2, scale, border=0):
     return np.mean(10 * np.log10(scale**2 / mse))  # <=> 1/B * sum_i
 
 
-def valid_one_epoch(model, loader, f_loss, device, loss_weight, scale):
+def valid_one_epoch(model, loader, f_loss, device, scale):
     """Train the model for one epoch
 
     Args:
