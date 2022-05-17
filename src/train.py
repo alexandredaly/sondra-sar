@@ -128,7 +128,6 @@ def main(cfg, path_to_config, runid):
     )
 
     image_first_epoch = None
-    fig = plt.figure()
     # Start training loop
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
         print("EPOCH : {}".format(epoch))
@@ -232,22 +231,32 @@ def main(cfg, path_to_config, runid):
             File.as_image(equalize(restored_images, p2, p98)[0])
         )
         run["logs/valid/batch/Target_image"].log(File.as_image(target_scattered))
-        run["logs/valid/batch/Diff_Target_Restored"].log(
-            File.as_image(np.abs(restored_images - target_images))
+
+        diff_restored_target = np.abs(restored_images - target_images)
+        max_diff = diff_restored_target.max()
+        min_diff = diff_restored_target.min()
+        print(f"Diff restored-target : min = {min_diff:.2f}; max = {max_diff:.2f}")
+        run["logs/valid/batch/Diff_Target_Restored_normalized"].log(
+            File.as_image(diff_restored_target / (max_diff if max_diff != 0 else 1.0))
         )
 
         run["logs/valid/batch/diff_restored_over_epochs"].log(
             File.as_image(np.abs(restored_images - image_first_epoch))
         )
 
-        plt.figure()
+        fig = plt.figure()
         plt.hist(target_images, bins=30)
         run["logs/valid/batch/histograms_target"].log(fig)
         plt.close()
 
-        plt.figure()
+        fig = plt.figure()
         plt.hist(restored_images, bins=30)
         run["logs/valid/batch/histograms_restored"].log(fig)
+        plt.close()
+
+        fig = plt.figure()
+        plt.hist(target_images - restored_images), bins=30)
+        run["logs/valid/batch/histograms_diff_target_restored"].log(fig)
         plt.close()
 
     # Stop Neptune logging
