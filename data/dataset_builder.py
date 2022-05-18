@@ -17,6 +17,9 @@ def build_dataset(cfg):
     highres_datadir = datadir / "high_resolution"
     if not highres_datadir.exists():
         highres_datadir.mkdir()
+    fake_highres_datadir = datadir / "fake_high_resolution"
+    if not fake_highres_datadir.exists():
+        fake_highres_datadir.mkdir()
 
     # Init data reader
     sardata = Uavsar_slc_stack_1x1(cfg)

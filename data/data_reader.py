@@ -147,6 +147,7 @@ class Uavsar_slc_stack_1x1:
         file_name = meta_identifier + "_s" + str(seg) + "_1x1.slc"
         data_path = os.path.join(self.path, file_name)
         print(os.path.isfile(data_path))
+
         if os.path.isfile(data_path):
             if file_name in list(self.slc_data.keys()):
                 print("Warning file", file_name, "will be erased by the new read")
@@ -175,7 +176,6 @@ class Uavsar_slc_stack_1x1:
             # If crop is an int, breaks the image into several subimages of size crop and save them.
             elif isinstance(crop, int):
                 self.slc_data[file_name] = []
-                count = 0
                 previous_l = 0
                 with tqdm.tqdm(
                     total=len(range(0, shape[0], crop)) * len(range(0, shape[1], crop))
@@ -280,6 +280,67 @@ class Uavsar_slc_stack_1x1:
                 )
         else:
             raise KeyError("Empty dictionary")
+
+    def generate_crop_image_from_spectre(self, identifier, sub_spectre, crop, downscale_factor=2, decimation=True, wd=None):
+
+        if decimation:
+            # Décimation par 2 de chaque dim, crop central
+            div = downscale_factor * 2
+            # WARNING : the code below may need to be adapted
+            # if downscale_factor is not 2 !!!
+            assert downscale_factor == 2
+
+            sub_spectre = sub_spectre[
+                          sub_spectre.shape[0] // div: (3 * sub_spectre.shape[0]) // div,
+                          sub_spectre.shape[1] // div: (3 * sub_spectre.shape[1]) // div,
+                          ]
+            # self.plot_amp_img(sub_spectre)
+
+        if wd is not None:
+            # TODO: Cheng : to be improved ? because a windowing is already
+            # applied on the large SLC image
+            sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
+
+        print("Computing the low resolution image")
+        lowres_img = np.abs(np.fft.ifft2(sub_spectre))
+
+        if isinstance(crop, list):
+            np.save(
+                f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
+                lowres_img,
+            )
+        else:
+
+            if decimation:
+                # Careful about decimation
+                crop_low = crop // downscale_factor
+
+                print("generate low resolution images")
+                for name in tqdm.tqdm(self.slc_data[identifier]):
+                    previous_l = int(name[:-4].split("_")[-2]) // downscale_factor
+                    previous_m = int(name[:-4].split("_")[-1]) // downscale_factor
+                    np.save(
+                        name.replace("high_resolution", "low_resolution"),
+                        lowres_img[
+                        previous_l: previous_l + crop_low,
+                        previous_m: previous_m + crop_low,
+                        ],
+                    )
+            else:
+
+                print("generate fake high resolution images")
+                for name in tqdm.tqdm(self.slc_data[identifier]):
+                    previous_l = int(name[:-4].split("_")[-2])
+                    previous_m = int(name[:-4].split("_")[-1])
+                    np.save(
+                        name.replace("high_resolution", "fake_high_resolution"),
+                        lowres_img[
+                        previous_l: previous_l + crop,
+                        previous_m: previous_m + crop,
+                        ],
+                    )
+        del lowres_img
+
 
     def subband_process(self, identifier, downscale_factor=2, decimation=True, wd=None):
         """A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain in order to obtain low resolution image.
@@ -407,63 +468,10 @@ class Uavsar_slc_stack_1x1:
         # self.plot_amp_img(spectre)
         # self.plot_amp_img(sub_spectre)
 
-        if decimation:
-            # Décimation par 2 de chaque dim, crop central
-            div = downscale_factor * 2
-            # WARNING : the code below may need to be adapted
-            # if downscale_factor is not 2 !!!
-            assert downscale_factor == 2
-
-            sub_spectre = sub_spectre[
-                sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
-                sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
-            ]
-            # self.plot_amp_img(sub_spectre)
-
-        if wd is not None:
-            # TODO: Cheng : to be improved ? because a windowing is already
-            # applied on the large SLC image
-            sub_spectre = window(wd, sub_spectre.shape) * sub_spectre
-
-        print("Computing the low resolution image")
-        lowres_img = np.abs(np.fft.ifft2(sub_spectre))
-
-        del sub_spectre
-
-        if isinstance(crop, list):
-            np.save(
-                f"{self.path_to_inf_image}/low_resolution/{identifier[:-4]}.npy",
-                lowres_img,
-            )
-        else:
-
-            if decimation:
-                # Careful about decimation
-                crop_low = crop // downscale_factor
-
-                for name in tqdm.tqdm(self.slc_data[identifier]):
-                    previous_l = int(name[:-4].split("_")[-2]) // downscale_factor
-                    previous_m = int(name[:-4].split("_")[-1]) // downscale_factor
-                    np.save(
-                        name.replace("high_resolution", "low_resolution"),
-                        lowres_img[
-                            previous_l : previous_l + crop_low,
-                            previous_m : previous_m + crop_low,
-                        ],
-                    )
-            else:
-
-                for name in tqdm.tqdm(self.slc_data[identifier]):
-                    previous_l = int(name[:-4].split("_")[-2])
-                    previous_m = int(name[:-4].split("_")[-1])
-                    np.save(
-                        name.replace("high_resolution", "low_resolution"),
-                        lowres_img[
-                            previous_l : previous_l + crop,
-                            previous_m : previous_m + crop,
-                        ],
-                    )
-        del lowres_img
+        #generate low resolution image with decimation
+        self.generate_crop_image_from_spectre(identifier, sub_spectre, crop, downscale_factor=downscale_factor, decimation=True, wd=wd)
+        # generate low resolution image without decimation (fake high resolulation image)
+        self.generate_crop_image_from_spectre(identifier, sub_spectre, crop, downscale_factor=downscale_factor, decimation=False, wd=wd)
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.
