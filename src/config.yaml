@@ -22,7 +22,6 @@ TRAIN:
     STRICT : False
   LOSS :
     NAME: "SSIM"
-    WEIGHT: -1
   DATA:
       MAXIFILE: "./data/dataset_maximum.npy"
       COMPUTE_MAX: False
