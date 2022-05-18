@@ -7,6 +7,9 @@ from shutil import copyfile
 import torchinfo
 
 import data.loader as loader
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from tools.train_utils import (
     ModelCheckpoint,
