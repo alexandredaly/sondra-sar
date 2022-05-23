@@ -47,7 +47,7 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
     Return:
         tot_loss : computed loss over one epoch
     """
-    ssim = SSIMLoss.SSIMLoss(size_average=False)
+    ssim = SSIMLoss.SSIMLoss(size_average=True)
     with torch.no_grad():
 
         model.eval()
@@ -73,7 +73,7 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
             l2_loss = torch.nn.functional.mse_loss(outputs, high, "sum")
             tot_l2loss += l2_loss
             ssim_loss = ssim(outputs, high)
-            tot_ssim += ssim_loss
+            tot_ssim += batch_size * ssim_loss
 
             n_samples += batch_size
             tot_loss += batch_size * f_loss(outputs, high).item()
