@@ -27,6 +27,7 @@ from data.utils import equalize
 
 import neptune.new as neptune
 from neptune.new.types import File
+from skimage import img_as_float
 
 
 def main(cfg, path_to_config, runid):
@@ -224,13 +225,22 @@ def main(cfg, path_to_config, runid):
         run["logs/training/batch/learning_rate"].log(learning_rate)
         run["logs/training/batch/L2_loss"].log(l2_loss)
         run["logs/training/batch/L1_loss"].log(l1_loss)
-        run["logs/valid/batch/Input_image"].log(
-            File.as_image(equalize(input_image, p2, p98)[0])
-        )
-        run["logs/valid/batch/Restored_image"].log(
-            File.as_image(equalize(restored_images, p2, p98)[0])
-        )
-        run["logs/valid/batch/Target_image"].log(File.as_image(target_scattered))
+
+        plt.figure()
+        plt.subplot(1, 3, 1)
+        plt.imshow(img_as_float(equalize(input_image, p2, p98)[0])), cmap=plt.cm.gray)
+        plt.title('Input')
+
+        plt.subplot(1, 3, 2)
+        plt.imshow(img_as_float(target_scattered), cmap=plt.cm.gray)
+        plt.title('Target')
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(img_as_float(equalize(restored_images, p2, p98)[0])), cmap=plt.cm.gray)
+        plt.title('Restored')
+
+        run["logs/valid/batch/Input_target_restored"].log(fig)
+        plt.close(fig)
 
         diff_restored_target = np.abs(restored_images - target_images)
         max_diff = diff_restored_target.max()
@@ -245,19 +255,20 @@ def main(cfg, path_to_config, runid):
         )
 
         fig = plt.figure()
+        plt.subplot(1, 3, 1)
         plt.hist(target_images, bins=30)
-        run["logs/valid/batch/histograms_target"].log(fig)
-        plt.close()
+        plt.title("Target")
 
-        fig = plt.figure()
+        plt.subplot(1, 3, 2)
         plt.hist(restored_images, bins=30)
-        run["logs/valid/batch/histograms_restored"].log(fig)
-        plt.close()
+        plt.title("Restored")
 
-        fig = plt.figure()
+        plt.subplot(1, 3, 3)
         plt.hist(target_images - restored_images, bins=30)
-        run["logs/valid/batch/histograms_diff_target_restored"].log(fig)
-        plt.close()
+        plt.title("Diff (target - restored)")
+
+        run["logs/valid/batch/histograms"].log(fig)
+        plt.close(fig)
 
     # Stop Neptune logging
     run.stop()
