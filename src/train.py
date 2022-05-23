@@ -32,7 +32,7 @@ from skimage import img_as_float
 
 def eval_upsample(mode, valid_loader, f_loss, device, cfg):
     model = torch.nn.Upsample(scale_factor=2, mode=mode)
-    (_, psnr, _, _, _, l1_loss, l2_loss,) = valid_one_epoch(
+    (_, psnr, _, _, _, l1_loss, l2_loss, ssim_loss) = valid_one_epoch(
         model,
         valid_loader,
         f_loss,
@@ -40,7 +40,7 @@ def eval_upsample(mode, valid_loader, f_loss, device, cfg):
         cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
     )
     print(
-        f"Baseline for upsampling {mode} : \n L1 = {l1_loss:.2f}, L2 = {l2_loss:.2f}, psnr={psnr:.2f}"
+        f"Baseline for upsampling {mode} : \n L1 = {l1_loss:.2f}, L2 = {l2_loss:.2f}, psnr={psnr:.2f}, ssim: {ssim_loss:.2f}"
     )
     return psnr, l1_loss, l2_loss
 
@@ -216,6 +216,7 @@ def main(cfg, path_to_config, runid):
             target_images,
             l1_loss,
             l2_loss,
+            ssim_loss,
         ) = valid_one_epoch(
             model,
             valid_loader,
@@ -246,6 +247,7 @@ def main(cfg, path_to_config, runid):
         run["logs/training/batch/learning_rate"].log(learning_rate)
         run["logs/training/batch/L2_loss"].log(l2_loss)
         run["logs/training/batch/L1_loss"].log(l1_loss)
+        run["logs/training/batch/SSIM_loss"].log(ssim_loss)
 
         fig = plt.figure()
         plt.subplot(1, 3, 1)
