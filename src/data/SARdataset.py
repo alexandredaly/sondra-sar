@@ -18,7 +18,7 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object
     """
 
-    def __init__(self, root, test=False, augment_valid=False):
+    def __init__(self, root, use_fake_high=False, test=False, augment_valid=False):
         """
         Args:
             root (str): absolute path of the data files
@@ -28,6 +28,11 @@ class SARdataset(Dataset):
         self.test = test
         self.root = root
         self.augment_valid = augment_valid
+
+        self.low_resolution_dir = "low_resolution"
+        self.high_resolution_dir = (
+            "fake_high_resolution" if use_fake_high else "high_resolution"
+        )
 
         if self.test:
             self.files_names = [
@@ -39,8 +44,8 @@ class SARdataset(Dataset):
         else:
             self.files_names = [
                 f
-                for f in os.listdir(os.path.join(self.root, "high_resolution"))
-                if os.path.isfile(os.path.join(self.root, "high_resolution", f))
+                for f in os.listdir(os.path.join(self.root, self.high_resolution_dir))
+                if os.path.isfile(os.path.join(self.root, self.high_resolution_dir, f))
             ]
 
     def __getitem__(self, idx):
@@ -54,19 +59,28 @@ class SARdataset(Dataset):
         """
 
         if self.test:
-            return to_db(np.load(self.files_names[idx])),self.files_names[idx].split("/")[-1] 
+            return (
+                to_db(np.load(self.files_names[idx])),
+                self.files_names[idx].split("/")[-1],
+            )
 
         else:
             image_input = to_db(
                 np.load(
-                    os.path.join(self.root, "low_resolution", self.files_names[idx]))
+                    os.path.join(
+                        self.root, self.low_resolution_dir, self.files_names[idx]
+                    )
+                )
             )
             image_target = to_db(
                 np.load(
-                    os.path.join(self.root, "high_resolution", self.files_names[idx]))
+                    os.path.join(
+                        self.root, self.high_resolution_dir, self.files_names[idx]
+                    )
+                )
             )
 
-            return image_input,image_target
+            return image_input, image_target
 
     def __len__(self):
         """Operator len that returns the size of the dataset

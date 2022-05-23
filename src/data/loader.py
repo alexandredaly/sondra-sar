@@ -75,7 +75,9 @@ def create_dataset(cfg):
     valid_ratio = cfg["DATASET"]["VALID_RATIO"]
 
     # Get the dataset for the training/validation sets
-    train_valid_dataset = SARdataset(cfg["TRAIN_DATA_DIR"])
+    train_valid_dataset = SARdataset(
+        cfg["TRAIN_DATA_DIR"], use_fake_high=cfg["DATASET"]["FAKE_HIGH"]
+    )
 
     # Get dataset maximum
     if cfg["TRAIN"]["DATA"]["COMPUTE_MAX"]:
