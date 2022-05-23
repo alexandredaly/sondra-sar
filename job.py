@@ -41,6 +41,9 @@ date
 echo "Setting up the virtual environment"
 source activate sondraSAR
 
+
+python -m pip list
+
 date
 echo "Training"
 cd src/
