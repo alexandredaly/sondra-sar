@@ -228,16 +228,18 @@ def main(cfg, path_to_config, runid):
 
         plt.figure()
         plt.subplot(1, 3, 1)
-        plt.imshow(img_as_float(equalize(input_image, p2, p98)[0])), cmap=plt.cm.gray)
-        plt.title('Input')
+        plt.imshow(img_as_float(equalize(input_image, p2, p98)[0]), cmap=plt.cm.gray)
+        plt.title("Input")
 
         plt.subplot(1, 3, 2)
         plt.imshow(img_as_float(target_scattered), cmap=plt.cm.gray)
-        plt.title('Target')
+        plt.title("Target")
 
         plt.subplot(1, 3, 3)
-        plt.imshow(img_as_float(equalize(restored_images, p2, p98)[0])), cmap=plt.cm.gray)
-        plt.title('Restored')
+        plt.imshow(
+            img_as_float(equalize(restored_images, p2, p98)[0]), cmap=plt.cm.gray
+        )
+        plt.title("Restored")
 
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
