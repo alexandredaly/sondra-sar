@@ -226,7 +226,7 @@ def main(cfg, path_to_config, runid):
         run["logs/training/batch/L2_loss"].log(l2_loss)
         run["logs/training/batch/L1_loss"].log(l1_loss)
 
-        plt.figure()
+        fig = plt.figure()
         plt.subplot(1, 3, 1)
         plt.imshow(img_as_float(equalize(input_image, p2, p98)[0]), cmap=plt.cm.gray)
         plt.title("Input")
