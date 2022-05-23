@@ -90,7 +90,7 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
             np.mean(low[0].cpu().numpy(), axis=0),
             np.mean(outputs[0].cpu().numpy(), axis=0),
             np.mean(high[0].cpu().numpy(), axis=0),
-            tot_l1loss / n_samples,
-            tot_l2loss / n_samples,
-            tot_ssim / n_samples,
+            (tot_l1loss / n_samples).item(),
+            (tot_l2loss / n_samples).item(),
+            (tot_ssim / n_samples).item(),
         )
