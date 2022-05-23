@@ -30,6 +30,21 @@ from neptune.new.types import File
 from skimage import img_as_float
 
 
+def eval_upsample(mode, valid_loader, f_loss, device, cfg):
+    model = torch.nn.Upsample(scale_factor=2, mode=mode)
+    (_, psnr, _, _, _, l1_loss, l2_loss,) = valid_one_epoch(
+        model,
+        valid_loader,
+        f_loss,
+        device,
+        cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
+    )
+    print(
+        f"Baseline for upsampling {mode} : \n L1 = {l1_loss:.2f}, L2 = {l2_loss:.2f}, psnr={psnr:.2f}"
+    )
+    return psnr, l1_loss, l2_loss
+
+
 def main(cfg, path_to_config, runid):
     """Main pipeline to train a model
 
@@ -132,6 +147,12 @@ def main(cfg, path_to_config, runid):
     )
 
     image_first_epoch = None
+
+    # Evaluate baselines with naive upsampling
+    eval_upsample("nearest", valid_loader, f_loss, device, cfg)
+    eval_upsample("bilinear", valid_loader, f_loss, device, cfg)
+    eval_upsample("bicubic", valid_loader, f_loss, device, cfg)
+
     # Start training loop
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
         print("EPOCH : {}".format(epoch))
