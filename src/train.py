@@ -241,13 +241,13 @@ def main(cfg, path_to_config, runid):
         target_scattered, p2, p98 = equalize(target_images)
 
         # Log Neptune losses, psnr and lr
-        run["logs/training/batch/training_loss"].log(training_loss)
-        run["logs/training/batch/valid_loss"].log(valid_loss)
-        run["logs/training/batch/psnr"].log(psnr)
-        run["logs/training/batch/learning_rate"].log(learning_rate)
-        run["logs/training/batch/L2_loss"].log(l2_loss)
-        run["logs/training/batch/L1_loss"].log(l1_loss)
-        run["logs/training/batch/SSIM_loss"].log(ssim_loss)
+        run["logs/training/loss"].log(training_loss)
+        run["logs/valid/loss"].log(valid_loss)
+        run["logs/valid/psnr"].log(psnr)
+        run["logs/learning_rate"].log(learning_rate)
+        run["logs/valid/L2_loss"].log(l2_loss)
+        run["logs/valid/L1_loss"].log(l1_loss)
+        run["logs/valid/SSIM_loss"].log(ssim_loss)
 
         fig = plt.figure()
         plt.subplot(1, 3, 1)
@@ -280,13 +280,16 @@ def main(cfg, path_to_config, runid):
         fig = plt.figure()
         plt.subplot(1, 3, 1)
         plt.hist(target_images, bins=30)
+        plt.xlim(-150, -25)
         plt.title("Target")
 
         plt.subplot(1, 3, 2)
         plt.hist(restored_images, bins=30)
+        plt.xlim(-150, -25)
         plt.title("Restored")
 
         plt.subplot(1, 3, 3)
+        plt.xlim(-50, 50)
         plt.hist(target_images - restored_images, bins=30)
         plt.title("Diff (target - restored)")
 

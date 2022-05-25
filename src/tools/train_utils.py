@@ -131,6 +131,8 @@ def get_scheduler(cfg, optimizer):
     Returns:
         torch.optim.lr_scheduler: learning rate scheduler
     """
+    if not "SCHEDULER" in cfg["TRAIN"]:
+        return None
     if cfg["TRAIN"]["SCHEDULER"]["NAME"] == "ReduceOnPlateau":
         return torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
