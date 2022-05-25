@@ -6,7 +6,7 @@ class SRCNN(nn.Module):
         super(SRCNN, self).__init__()
 
         base_channels = cfg["BASE_CHANNELS"]
-        self.upsample = nn.Upsample(scale_factor=2, mode="bicubic", align_corners=True)
+        self.upsample = nn.Upsample(scale_factor=2, mode="nearest", align_corners=True)
         self.conv1 = nn.Conv2d(
             num_channels, 2 * base_channels, kernel_size=9, padding=9 // 2
         )
