@@ -4,7 +4,7 @@ from torch import nn
 
 
 class PixelShuffle(nn.Module):
-    def __init__(self, cfg, num_channels=1):
+    def __init__(self, num_channels=1):
         super().__init__()
 
         scale_factor = 2
