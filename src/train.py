@@ -229,13 +229,14 @@ def main(cfg, path_to_config, runid):
             image_first_epoch = restored_images
 
         # Update scheduler
-        scheduler.step(valid_loss)
+        if scheduler is not None:
+            scheduler.step(valid_loss)
 
         # Save best model
         checkpoint.update(valid_loss, epoch)
 
         # Get current learning rate
-        learning_rate = scheduler.optimizer.param_groups[0]["lr"]
+        learning_rate = optimizer.param_groups[0]["lr"]
 
         # Scatter all images with the same transformation
         target_scattered, p2, p98 = equalize(target_images)
