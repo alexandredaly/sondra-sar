@@ -5,6 +5,7 @@ import numpy as np
 
 from models.SwinTransformer import SwinIR
 from models.SRCNN import SRCNN
+from models.PixelShuffle import PixelShuffle
 from tools.SSIMLoss import SSIMLoss
 
 
@@ -71,8 +72,9 @@ def get_model(cfg, pretrained=False):
 
     elif cfg["MODEL"]["NAME"] == "SRCNN":
         return SRCNN(cfg["MODEL"]["SRCNN"])
-
-    elif cfg["MODEL"]["NAME"] == "SomethingElse":
+    elif cfg["MODEL"]["NAME"] == "PixelShuffle":
+        return PixelShuffle()
+    else:
         return None
 
 
