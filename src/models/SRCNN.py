@@ -28,3 +28,38 @@ class SRCNN(nn.Module):
         # Then 3) reconstruction
         x = self.conv3(x)
         return x
+
+
+def conv_relu(chan):
+    return [nn.Conv2d(chan, chan, kernel_size=3, padding=1), nn.ReLU()]
+
+
+class SRCNN2(nn.Module):
+    def __init__(self, cfg, num_channels=1, depth=1):
+        super(SRCNN, self).__init__()
+
+        base_channels = cfg["BASE_CHANNELS"]
+        depth = cfg["DEPTH"]
+
+        layers = [
+            nn.UpSample(scale_factor=2, mode="nearest"),
+            nn.Conv2d(num_channels, base_channels, kernel_size=3, padding=1),
+            nn.ReLU(),
+        ]
+        for _ in range(depth):
+            layers.extend(conv_relu(base_channels))
+        layers.extend(
+            [
+                nn.Conv2d(base_channels, 2 * base_channels, kernel_size=3, padding=1),
+                nn.ReLU(),
+            ]
+        )
+        for _ in range(depth):
+            layers.extend(conv_relu(2 * base_channels))
+        layers.append(
+            nn.Conv2d(2 * base_channels, num_channels, kernel_size=3, padding=1)
+        )
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.model(x)
