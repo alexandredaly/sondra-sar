@@ -36,7 +36,7 @@ def conv_relu(chan):
 
 class SRCNN2(nn.Module):
     def __init__(self, cfg, num_channels=1, depth=1):
-        super(SRCNN, self).__init__()
+        super().__init__()
 
         base_channels = cfg["BASE_CHANNELS"]
         depth = cfg["DEPTH"]
