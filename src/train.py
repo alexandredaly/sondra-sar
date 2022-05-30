@@ -65,7 +65,7 @@ def main(cfg, path_to_config, runid):
     # TODO: Check what is depths and HEAD in SwinTransformers
 
     run = neptune.init(
-        project="Sondra-SAR", api_token=cfg["TRAIN"]["NEPTUNE_API_TOKEN"]
+        project="jeremyfix/Sondra-SAR", api_token=cfg["TRAIN"]["NEPTUNE_API_TOKEN"]
     )
     print(f"Neptune id is : {run._id}")
 
