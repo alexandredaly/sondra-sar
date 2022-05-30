@@ -42,7 +42,7 @@ class SRCNN2(nn.Module):
         depth = cfg["DEPTH"]
 
         layers = [
-            nn.UpSample(scale_factor=2, mode="nearest"),
+            nn.Upsample(scale_factor=2, mode="nearest"),
             nn.Conv2d(num_channels, base_channels, kernel_size=3, padding=1),
             nn.ReLU(),
         ]
