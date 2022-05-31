@@ -10,7 +10,7 @@ from skimage import data, img_as_float
 
 from data.utils import to_db
 
-_NUM_SAMPLES_DRY_RUN = 100
+_NUM_SAMPLES_DRY_RUN = 20
 
 
 class SARdataset(Dataset):
