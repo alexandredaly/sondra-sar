@@ -76,7 +76,9 @@ def create_dataset(cfg):
 
     # Get the dataset for the training/validation sets
     train_valid_dataset = SARdataset(
-        cfg["TRAIN_DATA_DIR"], use_fake_high=cfg["DATASET"]["FAKE_HIGH"]
+        cfg["TRAIN_DATA_DIR"],
+        use_fake_high=cfg["DATASET"]["FAKE_HIGH"],
+        dry_run=cfg["DATASET"]["DRY_RUN"],
     )
 
     # Get dataset maximum

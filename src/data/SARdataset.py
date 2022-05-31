@@ -10,6 +10,7 @@ from skimage import data, img_as_float
 
 from data.utils import to_db
 
+_NUM_SAMPLES_DRY_RUN = 100
 
 class SARdataset(Dataset):
     """Store the SAR data into a torch dataset like object.
@@ -18,7 +19,7 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object
     """
 
-    def __init__(self, root, use_fake_high=False, test=False, augment_valid=False):
+    def __init__(self, root, use_fake_high=False, test=False, augment_valid=Falsedry_run=False):
         """
         Args:
             root (str): absolute path of the data files
@@ -47,6 +48,9 @@ class SARdataset(Dataset):
                 for f in os.listdir(os.path.join(self.root, self.high_resolution_dir))
                 if os.path.isfile(os.path.join(self.root, self.high_resolution_dir, f))
             ]
+        # For a dry run experiment, just take few samples
+        if dry_run:
+            self.file_names = self.file_names[:_NUM_SAMPLES_DRY_RUN]
 
     def __getitem__(self, idx):
         """Retrieve the i-th item of the dataset

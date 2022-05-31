@@ -1,6 +1,8 @@
 RAW_DATA_DIR: './data_files/raw_data'
 TRAIN_DATA_DIR: '../data/data_files/train'
 DATASET:
+  FAKE_HIGH: True
+  DRY_RUN: False
   POLARISATION: ['HH']
   PREPROCESSING:
     DOWNSCALE_FACTOR: 2
