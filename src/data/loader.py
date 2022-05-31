@@ -93,8 +93,8 @@ def create_dataset(cfg):
         print(f"######### Max = {maxi} db has been loaded #########")
 
     # Split it into training and validation sets
-    nb_train = int((1.0 - valid_ratio) * len(train_valid_dataset)) + 1
     nb_valid = int(valid_ratio * len(train_valid_dataset))
+    nb_train = len(train_valid_dataset) - nb_valid
     train_dataset, valid_dataset = torch.utils.data.dataset.random_split(
         train_valid_dataset,
         [nb_train, nb_valid],
