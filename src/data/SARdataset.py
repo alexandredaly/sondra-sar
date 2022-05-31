@@ -12,6 +12,7 @@ from data.utils import to_db
 
 _NUM_SAMPLES_DRY_RUN = 100
 
+
 class SARdataset(Dataset):
     """Store the SAR data into a torch dataset like object.
 
@@ -19,7 +20,9 @@ class SARdataset(Dataset):
         Dataset (class): pytorch dataset object
     """
 
-    def __init__(self, root, use_fake_high=False, test=False, augment_valid=Falsedry_run=False):
+    def __init__(
+        self, root, use_fake_high=False, test=False, augment_valid=False, dry_run=False
+    ):
         """
         Args:
             root (str): absolute path of the data files
