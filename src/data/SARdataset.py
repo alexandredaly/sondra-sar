@@ -53,7 +53,7 @@ class SARdataset(Dataset):
             ]
         # For a dry run experiment, just take few samples
         if dry_run:
-            self.file_names = self.file_names[:_NUM_SAMPLES_DRY_RUN]
+            self.files_names = self.files_names[:_NUM_SAMPLES_DRY_RUN]
 
     def __getitem__(self, idx):
         """Retrieve the i-th item of the dataset
