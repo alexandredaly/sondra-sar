@@ -27,15 +27,16 @@ class DatasetTransformer(torch.utils.data.Dataset):
     def __getitem__(self, index):
         img, target = self.base_dataset[index]
         if self.test:
-            return self.transform(np.expand_dims(img, 0)).float(), target
+            return self.transform(img).float(), target.float()
         else:
             if self.augment:
-                img = augment_img(img)
-                target = augment_img(target)
+                # TODO: prefer using albumentations for that!
+                img = augment_img(img).float()
+                target = augment_img(target).float()
 
             return (
-                self.transform(np.expand_dims(img, 0)).float(),
-                self.transform(np.expand_dims(target, 0)).float(),
+                self.transform(img).float(),
+                self.transform(target).float(),
             )
 
     def __len__(self):
@@ -107,7 +108,7 @@ def create_dataset(cfg):
         transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(lambda x: x - maxi),
                 transforms.Lambda(
                     lambda x: x.clamp_(
                         min=cfg["DATASET"]["CLIP"]["MIN"],
@@ -136,7 +137,7 @@ def create_dataset(cfg):
         transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(lambda x: x - maxi),
                 transforms.Lambda(
                     lambda x: x.clamp_(
                         min=cfg["DATASET"]["CLIP"]["MIN"],

@@ -72,6 +72,7 @@ def equalize(image, p2=None, p98=None):
 
 
 def augment_img(img):
+    # TODO: prefer using albumentations for that!
     """Perform augmentation either flip and/or rotation
            From Kai Zhang (github: https://github.com/cszn)
 
