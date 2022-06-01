@@ -6,6 +6,7 @@ import pathlib
 import joblib
 
 from data.SARdataset import SARdataset
+from data.CelebaDataset import CelebaDataset
 from data.utils import augment_img
 
 
@@ -31,12 +32,12 @@ class DatasetTransformer(torch.utils.data.Dataset):
         else:
             if self.augment:
                 # TODO: prefer using albumentations for that!
-                img = augment_img(img).astype("float")
-                target = augment_img(target).astype("float")
+                img = augment_img(img)
+                target = augment_img(target)
 
             return (
-                self.transform(img).float(),
-                self.transform(target).float(),
+                self.transform(img),
+                self.transform(target),
             )
 
     def __len__(self):
@@ -57,8 +58,14 @@ def get_max(loader):
     #     if candidate > maxi:
     #         maxi = candidate
     print(str(datetime.datetime.now()))
+
+    def compute_max(img):
+        return img.max()
+
     maxi = max(
-        joblib.Parallel(n_jobs=-2)(joblib.delayed(np.max)(imgs) for (imgs, _) in loader)
+        joblib.Parallel(n_jobs=-2)(
+            joblib.delayed(compute_max)(imgs) for (imgs, _) in loader
+        )
     )
     print(str(datetime.datetime.now()))
 
@@ -76,11 +83,21 @@ def create_dataset(cfg):
     valid_ratio = cfg["DATASET"]["VALID_RATIO"]
 
     # Get the dataset for the training/validation sets
-    train_valid_dataset = SARdataset(
-        cfg["TRAIN_DATA_DIR"],
-        use_fake_high=cfg["DATASET"]["FAKE_HIGH"],
-        dry_run=cfg["DATASET"]["DRY_RUN"],
-    )
+    if cfg["DATASET"]["NAME"] == "SAR":
+        print("Loading the SAR dataset")
+        train_valid_dataset = SARdataset(
+            cfg["TRAIN_DATA_DIR"],
+            use_fake_high=cfg["DATASET"]["FAKE_HIGH"],
+            dry_run=cfg["DATASET"]["DRY_RUN"],
+        )
+    elif cfg["DATASET"]["NAME"] == "CelebA":
+        print("Loading the CelebA dataset")
+        train_valid_dataset = CelebaDataset(
+            cfg["TRAIN_DATA_DIR"],
+            dry_run=cfg["DATASET"]["DRY_RUN"],
+        )
+    else:
+        raise NotImplementedError(f"Unknown dataset {cfg['DATASET']['NAME']}")
 
     # Get dataset maximum
     if cfg["TRAIN"]["DATA"]["COMPUTE_MAX"]:
@@ -107,7 +124,7 @@ def create_dataset(cfg):
         train_dataset,
         transforms.Compose(
             [
-                transforms.ToTensor(),
+                # transforms.ToTensor(),
                 # transforms.Lambda(lambda x: x - maxi),
                 # transforms.Lambda(
                 #     lambda x: x.clamp_(
@@ -129,14 +146,14 @@ def create_dataset(cfg):
                 # ),
             ]
         ),
-        augment=True,
+        augment=False,
     )
 
     valid_dataset = DatasetTransformer(
         valid_dataset,
         transforms.Compose(
             [
-                transforms.ToTensor(),
+                # transforms.ToTensor(),
                 # transforms.Lambda(lambda x: x - maxi),
                 # transforms.Lambda(
                 #     lambda x: x.clamp_(
