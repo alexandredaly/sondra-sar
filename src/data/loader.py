@@ -31,8 +31,8 @@ class DatasetTransformer(torch.utils.data.Dataset):
         else:
             if self.augment:
                 # TODO: prefer using albumentations for that!
-                img = augment_img(img).float()
-                target = augment_img(target).float()
+                img = augment_img(img).astype("float")
+                target = augment_img(target).astype("float")
 
             return (
                 self.transform(img).float(),
@@ -108,25 +108,25 @@ def create_dataset(cfg):
         transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x - maxi),
-                transforms.Lambda(
-                    lambda x: x.clamp_(
-                        min=cfg["DATASET"]["CLIP"]["MIN"],
-                        max=cfg["DATASET"]["CLIP"]["MAX"],
-                    )
-                ),
-                transforms.Lambda(
-                    lambda x: x
-                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
-                    else x
-                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
-                    + 1
-                ),
-                transforms.Lambda(
-                    lambda x: x.expand(3, -1, -1)
-                    if cfg["DATASET"]["IN_CHANNELS"] == 3
-                    else x
-                ),
+                # transforms.Lambda(lambda x: x - maxi),
+                # transforms.Lambda(
+                #     lambda x: x.clamp_(
+                #         min=cfg["DATASET"]["CLIP"]["MIN"],
+                #         max=cfg["DATASET"]["CLIP"]["MAX"],
+                #     )
+                # ),
+                # transforms.Lambda(
+                #     lambda x: x
+                #     if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                #     else x
+                #     / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                #     + 1
+                # ),
+                # transforms.Lambda(
+                #     lambda x: x.expand(3, -1, -1)
+                #     if cfg["DATASET"]["IN_CHANNELS"] == 3
+                #     else x
+                # ),
             ]
         ),
         augment=True,
@@ -137,25 +137,25 @@ def create_dataset(cfg):
         transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x - maxi),
-                transforms.Lambda(
-                    lambda x: x.clamp_(
-                        min=cfg["DATASET"]["CLIP"]["MIN"],
-                        max=cfg["DATASET"]["CLIP"]["MAX"],
-                    )
-                ),
-                transforms.Lambda(
-                    lambda x: x
-                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
-                    else x
-                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
-                    + 1
-                ),
-                transforms.Lambda(
-                    lambda x: x.expand(3, -1, -1)
-                    if cfg["DATASET"]["IN_CHANNELS"] == 3
-                    else x
-                ),
+                # transforms.Lambda(lambda x: x - maxi),
+                # transforms.Lambda(
+                #     lambda x: x.clamp_(
+                #         min=cfg["DATASET"]["CLIP"]["MIN"],
+                #         max=cfg["DATASET"]["CLIP"]["MAX"],
+                #     )
+                # ),
+                # transforms.Lambda(
+                #     lambda x: x
+                #     if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                #     else x
+                #     / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                #     + 1
+                # ),
+                # transforms.Lambda(
+                #     lambda x: x.expand(3, -1, -1)
+                #     if cfg["DATASET"]["IN_CHANNELS"] == 3
+                #     else x
+                # ),
             ]
         ),
     )
