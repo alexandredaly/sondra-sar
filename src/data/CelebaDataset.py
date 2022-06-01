@@ -17,13 +17,13 @@ _IMG_WIDTH = 178
 
 class CelebaDataset(Dataset):
     def __init__(self, rootdir: pathlib.Path, dry_run=False):
-        dataset = torchvision.datasets.CelebA(
+        self.dataset = torchvision.datasets.CelebA(
             str(rootdir), transform=transforms.Compose([transforms.Grayscale()])
         )
 
         if dry_run:
-            indices = list(range(len(dataset)))[:_NUM_SAMPLES_DRY_RUN]
-            self.dataset = torch.utils.data.Subset(dataset, indices)
+            indices = list(range(len(self.dataset)))[:_NUM_SAMPLES_DRY_RUN]
+            self.dataset = torch.utils.data.Subset(self.dataset, indices)
 
         self.totensor = transforms.PILToTensor()
         self.highres_to_lowres = transforms.Compose(
@@ -38,4 +38,4 @@ class CelebaDataset(Dataset):
 
         lowres = self.highres_to_lowres(highres)
 
-        return self.totensor(lowres), self.totensor(highres)
+        return self.totensor(lowres).float(), self.totensor(highres).float()
