@@ -68,9 +68,9 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
 
             batch_size = low.shape[0]
 
-            l1_loss = torch.nn.functional.l1_loss(outputs, high, "sum")
+            l1_loss = torch.nn.functional.l1_loss(outputs, high, reduction="sum")
             tot_l1loss += l1_loss
-            l2_loss = torch.nn.functional.mse_loss(outputs, high, "sum")
+            l2_loss = torch.nn.functional.mse_loss(outputs, high, reduction="sum")
             tot_l2loss += l2_loss
             ssim_loss = ssim(outputs, high)
             tot_ssim += batch_size * ssim_loss
