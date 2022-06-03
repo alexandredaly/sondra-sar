@@ -27,7 +27,9 @@ from data.utils import equalize
 
 import neptune.new as neptune
 from neptune.new.types import File
-from skimage import img_as_float
+import tqdm
+
+# from skimage import img_as_float
 
 
 def eval_upsample(mode, valid_loader, f_loss, device, cfg):
@@ -43,6 +45,27 @@ def eval_upsample(mode, valid_loader, f_loss, device, cfg):
         f"Baseline for upsampling {mode} : \n L1 = {l1_loss:.2f}, L2 = {l2_loss:.2f}, psnr={psnr:.2f}, ssim: {ssim_loss:.2f}"
     )
     return psnr, l1_loss, l2_loss
+
+
+def compute_max_on_loader(loader):
+    range_input = None
+    range_output = None
+    for low, high in tqdm.tqdm(loader):
+        if not range_input:
+            range_input = (low.min(), low.max())
+        else:
+            range_input = (
+                min(low.min(), range_input[0]),
+                max(low.max(), range_input[1]),
+            )
+        if not range_output:
+            range_output = (high.min(), high.max())
+        else:
+            range_output = (
+                min(high.min(), range_output[0]),
+                max(high.max(), range_output[1]),
+            )
+    return range_input, range_output
 
 
 def main(cfg, path_to_config, runid):
@@ -152,6 +175,15 @@ def main(cfg, path_to_config, runid):
     eval_upsample("nearest", valid_loader, f_loss, device, cfg)
     eval_upsample("bilinear", valid_loader, f_loss, device, cfg)
     eval_upsample("bicubic", valid_loader, f_loss, device, cfg)
+
+    # Compute the range of the inputs and outputs of the train and valid sets
+
+    print("Evaluating the input/output ranges on the train set")
+    train_ranges = compute_max_on_loader(train_loader)
+    print(f"Got : {train_ranges}")
+    print("Evaluating the input/output ranges on the valid set")
+    valid_ranges = compute_max_on_loader(valid_loader)
+    print(f"Got : {valid_ranges}")
 
     # Start training loop
     for epoch in range(cfg["TRAIN"]["EPOCH"]):
