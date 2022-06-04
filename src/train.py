@@ -271,9 +271,6 @@ def main(cfg, path_to_config, runid):
         # Get current learning rate
         learning_rate = optimizer.param_groups[0]["lr"]
 
-        # Scatter all images with the same transformation
-        target_scattered, p2, p98 = equalize(target_images)
-
         # Log Neptune losses, psnr and lr
         run["logs/training/loss"].log(training_loss)
         run["logs/valid/loss"].log(valid_loss)
@@ -282,6 +279,9 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/L2_loss"].log(l2_loss)
         run["logs/valid/L1_loss"].log(l1_loss)
         run["logs/valid/SSIM_loss"].log(ssim_loss)
+
+        # Scatter all images with the same transformation
+        target_scattered, p2, p98 = equalize(target_images)
 
         fig = plt.figure()
         plt.subplot(1, 3, 1)

@@ -3,6 +3,7 @@ import torch
 import tqdm
 import numpy as np
 from . import SSIMLoss
+import torch.nn as nn
 
 
 def calculate_psnr(img1, img2, scale, border=0):
@@ -68,12 +69,14 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
 
             batch_size = low.shape[0]
 
-            l1_loss = torch.nn.functional.l1_loss(outputs, high, reduction="sum")
-            tot_l1loss += l1_loss
-            l2_loss = torch.nn.functional.mse_loss(outputs, high, reduction="sum")
-            tot_l2loss += l2_loss
+            # WARN: if using reduction = "mean", the avg
+            # is computed over batch_size * Height * Width
+            l1_loss = torch.nn.functional.l1_loss(outputs, high, reduction="mean")
+            tot_l1loss += batch_size * l1_loss.item()
+            l2_loss = torch.nn.functional.mse_loss(outputs, high, reduction="mean")
+            tot_l2loss += batch_size * l2_loss.item()
             ssim_loss = ssim(outputs, high)
-            tot_ssim += batch_size * ssim_loss
+            tot_ssim += batch_size * ssim_loss.item()
 
             n_samples += batch_size
             tot_loss += batch_size * f_loss(outputs, high).item()
@@ -90,7 +93,7 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
             np.mean(low[0].cpu().numpy(), axis=0),
             np.mean(outputs[0].cpu().numpy(), axis=0),
             np.mean(high[0].cpu().numpy(), axis=0),
-            (tot_l1loss / n_samples).item(),
-            (tot_l2loss / n_samples).item(),
-            (tot_ssim / n_samples).item(),
+            tot_l1loss / n_samples,
+            tot_l2loss / n_samples,
+            tot_ssim / n_samples,
         )
