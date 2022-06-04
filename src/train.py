@@ -290,23 +290,23 @@ def main(cfg, path_to_config, runid):
             target_scattered, p2, p98 = equalize(target_image)
             plt.subplot(num_images_to_plot, 3, i * 3 + 1)
             plt.imshow(equalize(input_image, p2, p98)[0], cmap=plt.cm.gray)
-            plt.title("Input")
+            # plt.title("Input")
             plt.axis("off")
 
             plt.subplot(num_images_to_plot, 3, i * 3 + 2)
             plt.imshow(target_scattered, cmap=plt.cm.gray)
-            plt.title("Target")
+            # plt.title("Target")
             plt.axis("off")
 
             plt.subplot(num_images_to_plot, 3, i * 3 + 3)
             plt.imshow(equalize(restored_image, p2, p98)[0], cmap=plt.cm.gray)
-            plt.title("Restored")
+            # plt.title("Restored")
             plt.axis("off")
 
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
 
-        diff_restored_target = np.abs(restored_images[0] - target_images[0])
+        diff_restored_target = np.abs(restored_images[0] - target_images[0]).squeeze()
         max_diff = diff_restored_target.max()
         min_diff = diff_restored_target.min()
         print(f"Diff restored-target : min = {min_diff:.2f}; max = {max_diff:.2f}")
@@ -315,7 +315,7 @@ def main(cfg, path_to_config, runid):
         )
 
         run["logs/valid/batch/diff_restored_over_epochs"].log(
-            File.as_image(np.abs(restored_images[0] - image_first_epoch))
+            File.as_image(np.abs(restored_images[0] - image_first_epoch).squeeze())
         )
 
         fig = plt.figure()
