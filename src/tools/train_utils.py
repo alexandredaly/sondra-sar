@@ -2,11 +2,27 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
+import random
 
 from models.SwinTransformer import SwinIR
 from models import SRCNN
 from models.PixelShuffle import PixelShuffle
 from tools.SSIMLoss import SSIMLoss
+
+
+def seed_everything(seed=42):
+    """Set the seed on pipeline, so the results are the same at every time we run it
+    This function is for the reproducibility
+    """ ""
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    # Set a fixed value for the hash seed
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    print(" > Seeding done ")
 
 
 class ModelCheckpoint:

@@ -19,6 +19,7 @@ from tools.train_utils import (
     get_scheduler,
     generate_unique_logpath,
     load_network,
+    seed_everything,
 )
 from tools.trainer import train_one_epoch
 from tools.valid import valid_one_epoch
@@ -335,6 +336,8 @@ def main(cfg, path_to_config, runid):
 
 
 if __name__ == "__main__":
+    seed_everything()
+
     # Init the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
