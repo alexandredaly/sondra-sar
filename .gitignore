@@ -4,3 +4,10 @@ trained_models/*
 !trained_models/README.md
 src/tensorboard/*
 src/.neptune
+**/*.swp
+config.yaml
+config_tmpl.yaml
+job.sbatch
+logslurms
+tmpconfig
+src/data/dataset_maximum.npy
