@@ -296,6 +296,8 @@ def main(cfg, path_to_config, runid):
         plt.imshow(equalize(restored_images, p2, p98)[0], cmap=plt.cm.gray)
         plt.title("Restored")
 
+        plt.axis("off")
+
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
 
