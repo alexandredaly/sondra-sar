@@ -244,7 +244,7 @@ def main(cfg, path_to_config, runid):
         (
             valid_loss,
             psnr,
-            input_image,
+            input_images,
             restored_images,
             target_images,
             l1_loss,
@@ -280,23 +280,28 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/L1_loss"].log(l1_loss)
         run["logs/valid/SSIM_loss"].log(ssim_loss)
 
-        # Scatter all images with the same transformation
-        target_scattered, p2, p98 = equalize(target_images)
-
+        num_images_to_plot = 4
         fig = plt.figure()
-        plt.subplot(1, 3, 1)
-        plt.imshow(equalize(input_image, p2, p98)[0], cmap=plt.cm.gray)
-        plt.title("Input")
+        for i in range(num_images_to_plot):
+            input_image = input_images[i]
+            target_image = target_images[i]
+            restored_image = restored_images[i]
 
-        plt.subplot(1, 3, 2)
-        plt.imshow(target_scattered, cmap=plt.cm.gray)
-        plt.title("Target")
+            target_scattered, p2, p98 = equalize(target_image)
+            plt.subplot(num_images_to_plot, 3, i * 3 + 1)
+            plt.imshow(equalize(input_image, p2, p98)[0], cmap=plt.cm.gray)
+            plt.title("Input")
+            plt.axis("off")
 
-        plt.subplot(1, 3, 3)
-        plt.imshow(equalize(restored_images, p2, p98)[0], cmap=plt.cm.gray)
-        plt.title("Restored")
+            plt.subplot(num_images_to_plot, 3, i * 3 + 2)
+            plt.imshow(target_scattered, cmap=plt.cm.gray)
+            plt.title("Target")
+            plt.axis("off")
 
-        plt.axis("off")
+            plt.subplot(num_images_to_plot, 3, i * 3 + 3)
+            plt.imshow(equalize(restored_image, p2, p98)[0], cmap=plt.cm.gray)
+            plt.title("Restored")
+            plt.axis("off")
 
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
