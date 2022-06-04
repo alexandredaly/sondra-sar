@@ -283,9 +283,9 @@ def main(cfg, path_to_config, runid):
         num_images_to_plot = 4
         fig = plt.figure()
         for i in range(num_images_to_plot):
-            input_image = input_images[i]
-            target_image = target_images[i]
-            restored_image = restored_images[i]
+            input_image = input_images[i].squeeze()
+            target_image = target_images[i].squeeze()
+            restored_image = restored_images[i].squeeze()
 
             target_scattered, p2, p98 = equalize(target_image)
             plt.subplot(num_images_to_plot, 3, i * 3 + 1)
