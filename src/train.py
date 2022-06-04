@@ -259,7 +259,7 @@ def main(cfg, path_to_config, runid):
         )
 
         if epoch == 0:
-            image_first_epoch = restored_images
+            image_first_epoch = restored_images[0]
 
         # Update scheduler
         if scheduler is not None:
@@ -306,7 +306,7 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
 
-        diff_restored_target = np.abs(restored_images - target_images)
+        diff_restored_target = np.abs(restored_images[0] - target_images[0])
         max_diff = diff_restored_target.max()
         min_diff = diff_restored_target.min()
         print(f"Diff restored-target : min = {min_diff:.2f}; max = {max_diff:.2f}")
@@ -315,7 +315,7 @@ def main(cfg, path_to_config, runid):
         )
 
         run["logs/valid/batch/diff_restored_over_epochs"].log(
-            File.as_image(np.abs(restored_images - image_first_epoch))
+            File.as_image(np.abs(restored_images[0] - image_first_epoch))
         )
 
         fig = plt.figure()
