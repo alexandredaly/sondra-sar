@@ -116,7 +116,7 @@ def generate_job(loss, model):
         content = content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
         content = content.replace("@BATCH_SIZE@", str(batch_size))
         content = content.replace("@LOSS@", str(loss))
-        # content = content.replace("@MODEL@", str(model))
+        content = content.replace("@MODEL@", str(model))
     print(f"Writting into {config_path} for {loss} and {model}")
     with open(config_path, "w") as f:
         f.write(content)
