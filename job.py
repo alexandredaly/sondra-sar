@@ -117,6 +117,7 @@ def generate_job(loss, model):
         content = content.replace("@BATCH_SIZE@", str(batch_size))
         content = content.replace("@LOSS@", str(loss))
         content = content.replace("@MODEL@", str(model))
+    print(f"Writting into {config_path} for {loss} and {model}")
     with open(config_path, "w") as f:
         f.write(content)
     print(f"Config file saved as {config_path}")
@@ -125,6 +126,6 @@ def generate_job(loss, model):
     submit_job(makejob(commit_id, config_path))
 
 
-for loss in ["l1", "l2", "ssim"]:
-    for model in ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]:
+for model in ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]:
+    for loss in ["l1", "l2", "ssim"]:
         generate_job(loss, model)
