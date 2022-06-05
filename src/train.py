@@ -281,7 +281,7 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/SSIM_loss"].log(-ssim_loss)
 
         num_images_to_plot = 4
-        fig = plt.figure()
+        fig = plt.figure(figsize=(20, 50))
         for i in range(num_images_to_plot):
             input_image = input_images[i].squeeze()
             target_image = target_images[i].squeeze()
@@ -319,7 +319,7 @@ def main(cfg, path_to_config, runid):
             File.as_image(np.abs(restored_images[0] - image_first_epoch).squeeze())
         )
 
-        fig = plt.figure(figsize=(10, 50))
+        fig = plt.figure()
         plt.subplot(1, 3, 1)
         plt.hist(target_images[0].squeeze(), bins=30)
         # plt.xlim(-1, 1)
