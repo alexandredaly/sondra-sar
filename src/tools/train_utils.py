@@ -114,9 +114,7 @@ def get_loss(cfg):
     elif cfg["TRAIN"]["LOSS"]["NAME"] == "l2sum":
         return nn.MSELoss(reduction="sum")
     else:
-        raise NotImplementedError(
-            "Loss type [{:s}] is not found.".format(cfg["TRAIN"]["LOSS"])
-        )
+        raise NotImplementedError(f"Loss type [{cfg['TRAIN']['LOSS']}] is not found.")
 
 
 def get_optimizer(cfg, params):
