@@ -318,7 +318,7 @@ def main(cfg, path_to_config, runid):
             File.as_image(np.abs(restored_images[0] - image_first_epoch).squeeze())
         )
 
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10, 50))
         plt.subplot(1, 3, 1)
         plt.hist(target_images[0].squeeze(), bins=30)
         # plt.xlim(-1, 1)
