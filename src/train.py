@@ -320,19 +320,19 @@ def main(cfg, path_to_config, runid):
 
         fig = plt.figure()
         plt.subplot(1, 3, 1)
-        plt.hist(target_images, bins=30)
-        plt.xlim(-1, 1)
+        plt.hist(target_images[0].squeeze(), bins=30)
+        # plt.xlim(-1, 1)
         plt.title("Target")
 
         plt.subplot(1, 3, 2)
-        plt.hist(restored_images, bins=30)
-        plt.xlim(-1, 1)
+        plt.hist(restored_images[0].squeeze(), bins=30)
+        # plt.xlim(-1, 1)
         # plt.xlim(-11, -25)
         plt.title("Restored")
 
         plt.subplot(1, 3, 3)
-        plt.xlim(-1, 1)
-        plt.hist(target_images - restored_images, bins=30)
+        # plt.xlim(-1, 1)
+        plt.hist((target_images - restored_images)[0].squeeze(), bins=30)
         plt.title("Diff (target - restored)")
 
         run["logs/valid/batch/histograms"].log(fig)
