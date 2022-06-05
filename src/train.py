@@ -278,7 +278,7 @@ def main(cfg, path_to_config, runid):
         run["logs/learning_rate"].log(learning_rate)
         run["logs/valid/L2_loss"].log(l2_loss)
         run["logs/valid/L1_loss"].log(l1_loss)
-        run["logs/valid/SSIM_loss"].log(ssim_loss)
+        run["logs/valid/SSIM_loss"].log(-ssim_loss)
 
         num_images_to_plot = 4
         fig = plt.figure()
