@@ -117,13 +117,14 @@ def generate_job(loss, model):
         content = content.replace("@BATCH_SIZE@", str(batch_size))
         content = content.replace("@LOSS@", str(loss))
         content = content.replace("@MODEL@", str(model))
+    print(content)
     print(f"Writting into {config_path} for {loss} and {model}")
     with open(config_path, "w") as f:
         f.write(content)
     print(f"Config file saved as {config_path}")
 
     # Launch the batch jobs
-    submit_job(makejob(commit_id, config_path))
+    # submit_job(makejob(commit_id, config_path))
 
 
 for model in ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]:
