@@ -94,20 +94,37 @@ if len(sys.argv) != 2:
 os.system("mkdir -p logslurms")
 os.system("mkdir -p tmpconfig")
 
-config_idx = 0
-while True:
-    config_path = pathlib.Path("./tmpconfig") / f"config-{config_idx}.yaml"
-    config_path = config_path.resolve()
-    if not config_path.exists():
-        break
-    config_idx += 1
 
-with open(f"{sys.argv[1]}") as f:
-    content = f.read()
-    content = content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
-with open(config_path, "w") as f:
-    f.write(content)
-print(f"Config file saved as {config_path}")
+def generate_job(loss, model):
+    if model == "PixelShuffle":
+        batch_size = 128
+    elif model in ["SRCNN", "SRCNN2"]:
+        batch_size = 32
+    elif model == "SwinTransformer":
+        batch_size = 2
 
-# Launch the batch jobs
-submit_job(makejob(commit_id, config_path))
+    config_idx = 0
+    while True:
+        config_path = pathlib.Path("./tmpconfig") / f"config-{config_idx}.yaml"
+        config_path = config_path.resolve()
+        if not config_path.exists():
+            break
+        config_idx += 1
+
+    with open(f"{sys.argv[1]}") as f:
+        content = f.read()
+        content = content.replace("@SAVE_MODEL_DIR@", str(SAVE_MODEL_DIR))
+        content = content.replace("@BATCH_SIZE@", str(batch_size))
+        content = content.replace("@LOSS@", str(loss))
+        content = content.replace("@MODEL@", str(model))
+    with open(config_path, "w") as f:
+        f.write(content)
+    print(f"Config file saved as {config_path}")
+
+    # Launch the batch jobs
+    submit_job(makejob(commit_id, config_path))
+
+
+for loss in ["l1", "l2", "ssim"]:
+    for model in ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]:
+        generate_job(loss, model)
