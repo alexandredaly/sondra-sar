@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 from skimage import exposure
 from skimage import data, img_as_float
 
-from data.utils import to_db
+from .utils import to_db
 
 _NUM_SAMPLES_DRY_RUN = 20
 
@@ -96,3 +96,27 @@ class SARdataset(Dataset):
             int: length of the dataset
         """
         return len(self.files_names)
+
+
+if __name__ == "__main__":
+    from .utils import equalize
+
+    root = "./data"
+    idx = 0
+    dataset = SARdataset("./data/data_files/train")
+    low, high = dataset[idx]
+
+    high, p2, p98 = equalize(high)
+    low, p2, p98 = equalize(low, p2, p98)
+
+    plt.figure()
+    plt.imshow(low, cmap="gray")
+    plt.axis("off")
+    plt.savefig("low.pdf", bbox_inches="tight")
+
+    plt.figure()
+    plt.imshow(high, cmap="gray")
+    plt.axis("off")
+    plt.savefig("high.pdf", bbox_inches="tight")
+
+    plt.show()
