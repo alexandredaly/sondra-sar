@@ -95,5 +95,5 @@ def valid_one_epoch(model, loader, f_loss, device, scale):
             high.cpu().numpy(),
             tot_l1loss / n_samples,
             tot_l2loss / n_samples,
-            tot_ssim / n_samples,
+            -tot_ssim / n_samples,
         )
