@@ -290,7 +290,8 @@ def main(cfg, path_to_config, runid):
             if num_remaining_images == 0:
                 low, high = next(it_valid)
                 low, high = low.to(device), high.to(device)
-                outputs = model(low)
+                with torch.no_grad():
+                    outputs = model(low)
                 low = low.cpu().numpy()
                 high = high.cpu().numpy()
                 outputs = outputs.cpu().numpy()
