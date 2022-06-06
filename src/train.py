@@ -280,9 +280,24 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/L1_loss"].log(l1_loss)
         run["logs/valid/SSIM_loss"].log(-ssim_loss)
 
+        model.eval()
+        num_remaining_images = 0
+        it_valid = iter(valid_loader)
         num_images_to_plot = 4
         fig = plt.figure(figsize=(20, 50))
-        for i in range(num_images_to_plot):
+        for _ in range(num_images_to_plot):
+
+            if num_remaining_images == 0:
+                low, high = next(it_valid)
+                low, high = low.to(device), high.to(device)
+                outputs = model(low)
+                low = low.cpu().numpy()
+                high = high.cpu().numpy()
+                outputs = outputs.cpu().numpy()
+                num_remaining_images = outputs.shape[0]
+
+            i = num_remaining_images - 1
+
             input_image = input_images[i].squeeze()
             target_image = target_images[i].squeeze()
             restored_image = restored_images[i].squeeze()
@@ -302,6 +317,8 @@ def main(cfg, path_to_config, runid):
             plt.imshow(equalize(restored_image, p2, p98)[0], cmap=plt.cm.gray)
             # plt.title("Restored")
             plt.axis("off")
+
+            num_remaining_images -= 1
         plt.tight_layout()
 
         run["logs/valid/batch/Input_target_restored"].log(fig)
