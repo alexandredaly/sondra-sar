@@ -87,8 +87,8 @@ class SARdataset(Dataset):
             )
 
             return (
-                torch.from_numpy(image_input).float(),
-                torch.from_numpy(image_target).float(),
+                torch.from_numpy(image_input).unsqueeze(0).float(),
+                torch.from_numpy(image_target).unsqueeze(0).float(),
             )
 
     def __len__(self):
