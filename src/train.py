@@ -271,7 +271,7 @@ def main(cfg, path_to_config, runid):
         it_valid = iter(valid_loader)
         num_images_to_plot = 4
         fig = plt.figure(figsize=(20, 50))
-        for _ in range(num_images_to_plot):
+        for plt_idx in range(num_images_to_plot):
 
             if num_remaining_images == 0:
                 low, high = next(it_valid)
@@ -290,17 +290,17 @@ def main(cfg, path_to_config, runid):
             restored_image = outputs[i].squeeze()
 
             target_scattered, p2, p98 = equalize(target_image)
-            plt.subplot(num_images_to_plot, 3, i * 3 + 1)
+            plt.subplot(num_images_to_plot, 3, plt_idx * 3 + 1)
             plt.imshow(equalize(input_image, p2, p98)[0], cmap=plt.cm.gray)
             # plt.title("Input")
             plt.axis("off")
 
-            plt.subplot(num_images_to_plot, 3, i * 3 + 2)
+            plt.subplot(num_images_to_plot, 3, plt_idx * 3 + 2)
             plt.imshow(target_scattered, cmap=plt.cm.gray)
             # plt.title("Target")
             plt.axis("off")
 
-            plt.subplot(num_images_to_plot, 3, i * 3 + 3)
+            plt.subplot(num_images_to_plot, 3, plt_idx * 3 + 3)
             plt.imshow(equalize(restored_image, p2, p98)[0], cmap=plt.cm.gray)
             # plt.title("Restored")
             plt.axis("off")
