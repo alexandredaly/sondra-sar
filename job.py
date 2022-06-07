@@ -13,12 +13,12 @@ def makejob(commit_id, config_path):
     return f"""#!/bin/bash 
 
 #SBATCH --job-name=super-SAR
-#SBATCH --nodes=1
+#SBATCH --nodes=11
 #SBATCH --partition=gpu_inter
 #SBATCH --time=2:00:00
 #SBATCH --output=logslurms/slurm-%j.out
 #SBATCH --error=logslurms/slurm-%j.err
-#SBATCH --exclude=sh00,sh[10-16],cam[00-16]
+#SBATCH --exclude=sh00,sh[10-16],cam[00-16],tx[00-16]
 
 # Load the conda module
 export PATH=/opt/conda/bin:$PATH
