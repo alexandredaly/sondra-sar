@@ -13,7 +13,7 @@ def makejob(commit_id, config_path):
     return f"""#!/bin/bash 
 
 #SBATCH --job-name=super-SAR
-#SBATCH --nodes=11
+#SBATCH --nodes=1
 #SBATCH --partition=gpu_inter
 #SBATCH --time=2:00:00
 #SBATCH --output=logslurms/slurm-%j.out
