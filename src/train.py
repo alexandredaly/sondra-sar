@@ -170,8 +170,6 @@ def main(cfg, path_to_config, runid):
         save_dir, model, cfg["TRAIN"]["EPOCH"], cfg["TRAIN"]["CHECKPOINT_STEP"]
     )
 
-    image_first_epoch = None
-
     # Evaluate baselines with naive upsampling
     eval_upsample("nearest", valid_loader, f_loss, device, cfg)
     eval_upsample("bilinear", valid_loader, f_loss, device, cfg)
@@ -248,9 +246,6 @@ def main(cfg, path_to_config, runid):
             device,
             cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"],
         )
-
-        if epoch == 0:
-            image_first_epoch = restored_images[0]
 
         # Update scheduler
         if scheduler is not None:
