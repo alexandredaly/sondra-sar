@@ -27,8 +27,7 @@ class SARdataset(Dataset):
         Args:
             root (str): absolute path of the data files
             image_type (str): type of bandwith used for SAR images. Defaults to 'HH'.
-            preprocessing (str): type of preprocessing to perform. Can be either 'padding', 'hanning' or None. Defaults to 'None'.
-        """
+            preprocessing (str): type of preprocessing to perform. Can be either 'padding', 'hanning' or None. Defaults to 'None'."""
         self.test = test
         self.root = root
         self.augment_valid = augment_valid
@@ -87,7 +86,10 @@ class SARdataset(Dataset):
                 )
             )
 
-            return image_input, image_target
+            return (
+                torch.from_numpy(image_input).float(),
+                torch.from_numpy(image_target).float(),
+            )
 
     def __len__(self):
         """Operator len that returns the size of the dataset

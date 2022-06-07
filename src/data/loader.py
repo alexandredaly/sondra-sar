@@ -124,7 +124,6 @@ def create_dataset(cfg):
         train_dataset,
         transforms.Compose(
             [
-                # transforms.ToTensor(),
                 # transforms.Lambda(lambda x: x - maxi),
                 # transforms.Lambda(
                 #     lambda x: x.clamp_(
@@ -153,7 +152,6 @@ def create_dataset(cfg):
         valid_dataset,
         transforms.Compose(
             [
-                # transforms.ToTensor(),
                 # transforms.Lambda(lambda x: x - maxi),
                 # transforms.Lambda(
                 #     lambda x: x.clamp_(
