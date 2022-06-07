@@ -18,7 +18,7 @@ def makejob(commit_id, config_path):
 #SBATCH --time=12:00:00
 #SBATCH --output=logslurms/slurm-%j.out
 #SBATCH --error=logslurms/slurm-%j.err
-#SBATCH --exclude=sh00,sh[10-16]
+#SBATCH --exclude=sh00,sh[10-16],cam[00-16]
 
 # Load the conda module
 export PATH=/opt/conda/bin:$PATH
@@ -97,9 +97,9 @@ os.system("mkdir -p tmpconfig")
 
 def generate_job(loss, model):
     if model == "PixelShuffle":
-        batch_size = 128
+        batch_size = 64
     elif model in ["SRCNN", "SRCNN2"]:
-        batch_size = 32
+        batch_size = 16
     elif model == "SwinTransformer":
         batch_size = 2
 
