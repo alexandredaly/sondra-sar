@@ -241,16 +241,7 @@ def main(cfg, path_to_config, runid):
             model.apply(regularizer_clip)
 
         # Validation
-        (
-            valid_loss,
-            psnr,
-            input_images,
-            restored_images,
-            target_images,
-            l1_loss,
-            l2_loss,
-            ssim_loss,
-        ) = valid_one_epoch(
+        (valid_loss, psnr, _, _, _, l1_loss, l2_loss, ssim_loss,) = valid_one_epoch(
             model,
             valid_loader,
             f_loss,
@@ -299,9 +290,9 @@ def main(cfg, path_to_config, runid):
 
             i = num_remaining_images - 1
 
-            input_image = input_images[i].squeeze()
-            target_image = target_images[i].squeeze()
-            restored_image = restored_images[i].squeeze()
+            input_image = low[i].squeeze()
+            target_image = high[i].squeeze()
+            restored_image = outputs[i].squeeze()
 
             target_scattered, p2, p98 = equalize(target_image)
             plt.subplot(num_images_to_plot, 3, i * 3 + 1)
@@ -325,7 +316,11 @@ def main(cfg, path_to_config, runid):
         run["logs/valid/batch/Input_target_restored"].log(fig)
         plt.close(fig)
 
-        diff_restored_target = np.abs(restored_images[0] - target_images[0]).squeeze()
+        input_image = low[0].squeeze()
+        target_image = high[0].squeeze()
+        restored_image = outputs[0].squeeze()
+
+        diff_restored_target = np.abs(restored_image - target_image).squeeze()
         max_diff = diff_restored_target.max()
         min_diff = diff_restored_target.min()
         print(f"Diff restored-target : min = {min_diff:.2f}; max = {max_diff:.2f}")
@@ -333,25 +328,21 @@ def main(cfg, path_to_config, runid):
             File.as_image(diff_restored_target / (max_diff if max_diff != 0 else 1.0))
         )
 
-        run["logs/valid/batch/diff_restored_over_epochs"].log(
-            File.as_image(np.abs(restored_images[0] - image_first_epoch).squeeze())
-        )
-
         fig = plt.figure()
         plt.subplot(1, 3, 1)
-        plt.hist(target_images[0].squeeze(), bins=30)
+        plt.hist(target_image, bins=30)
         # plt.xlim(-1, 1)
         plt.title("Target")
 
         plt.subplot(1, 3, 2)
-        plt.hist(restored_images[0].squeeze(), bins=30)
+        plt.hist(restored_image, bins=30)
         # plt.xlim(-1, 1)
         # plt.xlim(-11, -25)
         plt.title("Restored")
 
         plt.subplot(1, 3, 3)
         # plt.xlim(-1, 1)
-        plt.hist((target_images - restored_images)[0].squeeze(), bins=30)
+        plt.hist(target_image - restored_image, bins=30)
         plt.title("Diff (target - restored)")
 
         run["logs/valid/batch/histograms"].log(fig)
