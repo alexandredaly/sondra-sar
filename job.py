@@ -126,7 +126,12 @@ def generate_job(loss, model):
     submit_job(makejob(commit_id, config_path))
 
 
-for model in ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]:
-    # for model in ["SwinTransformer"]:
-    for loss in ["SSIM"]:
-        generate_job(loss, model)
+# ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]
+# ["l1", "l2", "SSIM"]
+
+generate_job("SSIM", "PixelShuffle")
+
+# for model in ["PixelShuffle"]:
+# for model in ["SwinTransformer"]:
+# for loss in ["SSIM"]:
+#     generate_job(loss, model)
