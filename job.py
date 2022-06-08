@@ -14,8 +14,8 @@ def makejob(commit_id, config_path):
 
 #SBATCH --job-name=super-SAR
 #SBATCH --nodes=1
-#SBATCH --partition=gpu_inter
-#SBATCH --time=2:00:00
+#SBATCH --partition=gpu_prod_long
+#SBATCH --time=10:00:00
 #SBATCH --output=logslurms/slurm-%j.out
 #SBATCH --error=logslurms/slurm-%j.err
 #SBATCH --exclude=sh00,sh[10-16],cam[00-16],tx[00-16]
@@ -129,7 +129,7 @@ def generate_job(loss, model):
 
 
 # models = ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]
-losses = ["l1", "l2", "SSIM"]
+losses = ["SSIM"]
 # models = ["SRCNN", "SRCNN2", "PixelShuffle"]  # , "SwinTransformer"]
 models = ["SRCNN", "PixelShuffle", "SRCNN2"]  # , "SwinTransformer"]
 # losses = ["SSIM"]

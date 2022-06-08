@@ -124,20 +124,20 @@ def create_dataset(cfg):
         train_dataset,
         transforms.Compose(
             [
-                # transforms.Lambda(lambda x: x - maxi),
-                # transforms.Lambda(
-                #     lambda x: x.clamp_(
-                #         min=cfg["DATASET"]["CLIP"]["MIN"],
-                #         max=cfg["DATASET"]["CLIP"]["MAX"],
-                #     )
-                # ),
-                # transforms.Lambda(
-                #     lambda x: x
-                #     if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
-                #     else x
-                #     / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
-                #     + 1
-                # ),
+                transforms.Lambda(lambda x: x - maxi),
+                transforms.Lambda(
+                    lambda x: x.clamp_(
+                        min=cfg["DATASET"]["CLIP"]["MIN"],
+                        max=cfg["DATASET"]["CLIP"]["MAX"],
+                    )
+                ),
+                transforms.Lambda(
+                    lambda x: x
+                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                    else x
+                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                    + 1
+                ),
                 # transforms.Lambda(
                 #     lambda x: x.expand(3, -1, -1)
                 #     if cfg["DATASET"]["IN_CHANNELS"] == 3
@@ -152,20 +152,20 @@ def create_dataset(cfg):
         valid_dataset,
         transforms.Compose(
             [
-                # transforms.Lambda(lambda x: x - maxi),
-                # transforms.Lambda(
-                #     lambda x: x.clamp_(
-                #         min=cfg["DATASET"]["CLIP"]["MIN"],
-                #         max=cfg["DATASET"]["CLIP"]["MAX"],
-                #     )
-                # ),
-                # transforms.Lambda(
-                #     lambda x: x
-                #     if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
-                #     else x
-                #     / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
-                #     + 1
-                # ),
+                transforms.Lambda(lambda x: x - maxi),
+                transforms.Lambda(
+                    lambda x: x.clamp_(
+                        min=cfg["DATASET"]["CLIP"]["MIN"],
+                        max=cfg["DATASET"]["CLIP"]["MAX"],
+                    )
+                ),
+                transforms.Lambda(
+                    lambda x: x
+                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
+                    else x
+                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                    + 1
+                ),
                 # transforms.Lambda(
                 #     lambda x: x.expand(3, -1, -1)
                 #     if cfg["DATASET"]["IN_CHANNELS"] == 3
