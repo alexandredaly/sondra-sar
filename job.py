@@ -98,8 +98,10 @@ os.system("mkdir -p tmpconfig")
 def generate_job(loss, model):
     if model == "PixelShuffle":
         batch_size = 128
-    elif model in ["SRCNN", "SRCNN2"]:
+    elif model in ["SRCNN2"]:
         batch_size = 32
+    elif model == "SRCNN2":
+        batch_size = 16
     elif model == "SwinTransformer":
         batch_size = 2
 
@@ -127,9 +129,9 @@ def generate_job(loss, model):
 
 
 # models = ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]
-losses = ["l1"]
+losses = ["l1", "l2", "SSIM"]
 # models = ["SRCNN", "SRCNN2", "PixelShuffle"]  # , "SwinTransformer"]
-models = ["SRCNN2", "SwinTransformer"]
+models = ["SRCNN2"]  # , "SwinTransformer"]
 # losses = ["SSIM"]
 
 for model in models:
