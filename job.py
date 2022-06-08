@@ -98,7 +98,7 @@ os.system("mkdir -p tmpconfig")
 def generate_job(loss, model):
     if model == "PixelShuffle":
         batch_size = 128
-    elif model in ["SRCNN2"]:
+    elif model in ["SRCNN"]:
         batch_size = 32
     elif model == "SRCNN2":
         batch_size = 16
