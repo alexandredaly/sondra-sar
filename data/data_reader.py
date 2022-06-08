@@ -281,7 +281,15 @@ class Uavsar_slc_stack_1x1:
         else:
             raise KeyError("Empty dictionary")
 
-    def generate_crop_image_from_spectre(self, identifier, sub_spectre, crop, downscale_factor=2, decimation=True, wd=None):
+    def generate_crop_image_from_spectre(
+        self,
+        identifier,
+        sub_spectre,
+        crop,
+        downscale_factor=2,
+        decimation=True,
+        wd=None,
+    ):
 
         if decimation:
             # Décimation par 2 de chaque dim, crop central
@@ -291,9 +299,9 @@ class Uavsar_slc_stack_1x1:
             assert downscale_factor == 2
 
             sub_spectre = sub_spectre[
-                          sub_spectre.shape[0] // div: (3 * sub_spectre.shape[0]) // div,
-                          sub_spectre.shape[1] // div: (3 * sub_spectre.shape[1]) // div,
-                          ]
+                sub_spectre.shape[0] // div : (3 * sub_spectre.shape[0]) // div,
+                sub_spectre.shape[1] // div : (3 * sub_spectre.shape[1]) // div,
+            ]
             # self.plot_amp_img(sub_spectre)
 
         if wd is not None:
@@ -322,8 +330,8 @@ class Uavsar_slc_stack_1x1:
                     np.save(
                         name.replace("high_resolution", "low_resolution"),
                         lowres_img[
-                        previous_l: previous_l + crop_low,
-                        previous_m: previous_m + crop_low,
+                            previous_l : previous_l + crop_low,
+                            previous_m : previous_m + crop_low,
                         ],
                     )
             else:
@@ -335,12 +343,11 @@ class Uavsar_slc_stack_1x1:
                     np.save(
                         name.replace("high_resolution", "fake_high_resolution"),
                         lowres_img[
-                        previous_l: previous_l + crop,
-                        previous_m: previous_m + crop,
+                            previous_l : previous_l + crop,
+                            previous_m : previous_m + crop,
                         ],
                     )
         del lowres_img
-
 
     def subband_process(self, identifier, downscale_factor=2, decimation=True, wd=None):
         """A method to decompose the original image in the 2D spectral (dual range x dual azimuth) domain in order to obtain low resolution image.
@@ -403,10 +410,10 @@ class Uavsar_slc_stack_1x1:
 
         krange = kcentral * np.cos(deport) + (
             1 / self.subband_header[identifier]["RgPixelSz"]
-        ) * np.arange(-1 / 2, 1 / 2, 1 / RgCnt)
+        ) * np.linspace(-1 / 2, 1 / 2, RgCnt)
         kazimuth = kcentral * np.sin(deport) + (
             1 / self.subband_header[identifier]["AzPixelSz"]
-        ) * np.arange(-1 / 2, 1 / 2, 1 / AzCnt)
+        ) * np.linspace(-1 / 2, 1 / 2, AzCnt)
 
         # Filtering in frequency -> sub band and Aperture -> theta
         # fcos(theta) = krange & fsin(theta) = kazimuth
@@ -468,10 +475,24 @@ class Uavsar_slc_stack_1x1:
         # self.plot_amp_img(spectre)
         # self.plot_amp_img(sub_spectre)
 
-        #generate low resolution image with decimation
-        self.generate_crop_image_from_spectre(identifier, sub_spectre, crop, downscale_factor=downscale_factor, decimation=True, wd=wd)
+        # generate low resolution image with decimation
+        self.generate_crop_image_from_spectre(
+            identifier,
+            sub_spectre,
+            crop,
+            downscale_factor=downscale_factor,
+            decimation=True,
+            wd=wd,
+        )
         # generate low resolution image without decimation (fake high resolulation image)
-        self.generate_crop_image_from_spectre(identifier, sub_spectre, crop, downscale_factor=downscale_factor, decimation=False, wd=wd)
+        self.generate_crop_image_from_spectre(
+            identifier,
+            sub_spectre,
+            crop,
+            downscale_factor=downscale_factor,
+            decimation=False,
+            wd=wd,
+        )
 
     def construct_cropped_image_from_slc(self, shape, crop, data_path):
         """Return the cropped portion of an SLC image as a numpy array.
