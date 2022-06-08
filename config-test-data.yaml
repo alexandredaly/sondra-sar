@@ -1,0 +1,19 @@
+RAW_DATA_DIR: './data_files/infer_raw_data'
+TRAIN_DATA_DIR: '../data/data_files/test'
+DATASET:
+  POLARISATION: ['HH']
+  PREPROCESSING:
+    DOWNSCALE_FACTOR: 2
+    DECIMATION: True
+    WINDOW: "hanning"
+  CLIP:
+    MIN: -200
+    MAX: 0
+  IMAGE_SIZE: 512
+  IN_CHANNELS: 1
+  NUM_THREADS: 4
+  BATCH_SIZE: 2
+  VALID_RATIO: 0.2
+INFERENCE:
+  PATH_TO_IMAGES: '../data/data_files/inf/low_resolution'
+  PATH_TO_SAVE: '../data/data_files/visualisation'
