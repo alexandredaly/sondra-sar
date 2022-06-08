@@ -128,7 +128,8 @@ def generate_job(loss, model):
 
 # models = ["SRCNN", "SRCNN2", "PixelShuffle", "SwinTransformer"]
 losses = ["l1", "l2", "SSIM"]
-models = ["SRCNN", "SRCNN2", "PixelShuffle"]  # , "SwinTransformer"]
+# models = ["SRCNN", "SRCNN2", "PixelShuffle"]  # , "SwinTransformer"]
+models = ["SRCNN2"]
 # losses = ["SSIM"]
 
 for model in models:
