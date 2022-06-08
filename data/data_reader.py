@@ -410,10 +410,10 @@ class Uavsar_slc_stack_1x1:
 
         krange = kcentral * np.cos(deport) + (
             1 / self.subband_header[identifier]["RgPixelSz"]
-        ) * np.linspace(-1 / 2, 1 / 2, RgCnt)
+        ) * np.linspace(-1 / 2, 1 / 2, RgCnt, endpoint=False)
         kazimuth = kcentral * np.sin(deport) + (
             1 / self.subband_header[identifier]["AzPixelSz"]
-        ) * np.linspace(-1 / 2, 1 / 2, AzCnt)
+        ) * np.linspace(-1 / 2, 1 / 2, AzCnt, endpoint=False)
 
         # Filtering in frequency -> sub band and Aperture -> theta
         # fcos(theta) = krange & fsin(theta) = kazimuth
