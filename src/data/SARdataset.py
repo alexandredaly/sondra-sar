@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import random
+import pathlib
 
 from torch.utils.data import Dataset
 from skimage import exposure
@@ -39,7 +40,7 @@ class SARdataset(Dataset):
 
         if self.test:
             self.files_names = [
-                os.path.join(self.root, f)
+                pathlib.Path(self.root) / f
                 for f in os.listdir(self.root)
                 if os.path.isfile(os.path.join(self.root, f))
             ]
@@ -66,8 +67,9 @@ class SARdataset(Dataset):
 
         if self.test:
             return (
-                to_db(np.load(self.files_names[idx])),
-                self.files_names[idx].split("/")[-1],
+                torch.from_numpy(to_db(np.load(self.files_names[idx])))
+                .unsqueeze(0)
+                .float()
             )
 
         else:

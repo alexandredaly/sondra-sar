@@ -1,9 +1,11 @@
 import os
 import yaml
 import argparse
+import shutil
+import pathlib
 import torch
 from PIL import Image
-import numpy as np 
+import numpy as np
 import data.loader as loader
 
 from tools.train_utils import get_model, load_network
@@ -34,32 +36,24 @@ def main(cfg):
     print("\n Model has been load !")
 
     # Init directory to save images if not created
-    if not os.path.exists(cfg["INFERENCE"]["PATH_TO_SAVE"]):
-        os.mkdir(cfg["INFERENCE"]["PATH_TO_SAVE"])
+    path_to_save = pathlib.Path(cfg["INFERENCE"]["PATH_TO_SAVE"])
+    if path_to_save.exists():
+        print(f"Removing {path_to_save}")
+        shutil.rmtree(path_to_save)
+    path_to_save.mkdir()
 
     # Start testing loop
-    for images, names in test_data:
+    for images, filepaths in test_data:
         images = images.to(device)
-        print(images.shape)
         # Pass images through the model
         outputs = model(images)
 
         # Save images
-        for i, image in enumerate(outputs):
-            image = image.cpu().detach().numpy()
-
-            # Save output numpy array
-            if cfg["INFERENCE"]["SAVE_ARRAY"]:
-                np.save(os.path.join(cfg["INFERENCE"]["PATH_TO_SAVE"], names[i]),image)
-
-            # Save output png image
-            if cfg["INFERENCE"]["SAVE_PNG"]:
-                img = Image.fromarray(np.uint8(image.squeeze().squeeze()))
-                img.save(
-                    os.path.join(
-                        cfg["INFERENCE"]["PATH_TO_SAVE"], names[i][:-3] + "png"
-                    )
-                )
+        for output, filepath in zip(outputs, filepaths):
+            print(filepath)
+            filepath = pathlib.Path(filepath)
+            output = output.cpu().detach().numpy()
+            np.save(path_to_save / filepath.name, output)
 
 
 if __name__ == "__main__":

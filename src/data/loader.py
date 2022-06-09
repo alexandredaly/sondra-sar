@@ -26,10 +26,14 @@ class DatasetTransformer(torch.utils.data.Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        img, target = self.base_dataset[index]
         if self.test:
-            return self.transform(img).float(), target.float()
+            img = self.base_dataset[index]
+            return (
+                self.transform(img).float(),
+                str(self.base_dataset.files_names[index]),
+            )
         else:
+            img, target = self.base_dataset[index]
             if self.augment:
                 # TODO: prefer using albumentations for that!
                 img = augment_img(img)
@@ -254,16 +258,17 @@ def load_test(cfg):
     # Init test dataset
     test_data = SARdataset(cfg["INFERENCE"]["PATH_TO_IMAGES"], test=True)
 
-    # Get the maximum of the training data
-    maxi = np.load("./data/dataset_maximum.npy")
+    # Get dataset maximum
+    print("Loading a precomputed max")
+    maxi = float(cfg["INFERENCE"]["MAXIFILE"])
+    print(f"######### Max = {maxi} db has been loaded #########")
 
     # Apply transforms
     test_dataset = DatasetTransformer(
         test_data,
         transforms.Compose(
             [
-                transforms.ToTensor(),
-                transforms.Lambda(lambda x: x.permute(1, 0, 2) - maxi),
+                transforms.Lambda(lambda x: x - maxi),
                 transforms.Lambda(
                     lambda x: x.clamp_(
                         min=cfg["DATASET"]["CLIP"]["MIN"],
@@ -271,9 +276,11 @@ def load_test(cfg):
                     )
                 ),
                 transforms.Lambda(
-                    lambda x: x.expand(3, -1, -1)
-                    if cfg["DATASET"]["IN_CHANNELS"] == 3
+                    lambda x: x
+                    if not cfg["TRAIN"]["LOSS"]["NAME"] == "SSIM"
                     else x
+                    / (cfg["DATASET"]["CLIP"]["MAX"] - cfg["DATASET"]["CLIP"]["MIN"])
+                    + 1
                 ),
             ]
         ),
