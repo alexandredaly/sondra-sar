@@ -8,6 +8,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def get_scale(loss, lossname):
+    scale_factor = 1
+    if loss == "SSIM":
+        if lossname == "L1":
+            scale_factor = 200
+        elif lossname == "L2":
+            scale_factor = 200**2
+    return scale_factor
+
+
 def main():
     root_dir = pathlib.Path("./neptune_csvs")
     master_df = pd.read_csv(root_dir / "Sondra-SAR.csv")
@@ -62,7 +72,7 @@ def main():
         "swintransformer": "tab:green",
         "pixelshuffle": "tab:red",
     }
-    for minimized_loss in ["l1", "l2"]:
+    for minimized_loss in ["l1", "l2", "SSIM"]:
         fig, axes = plt.subplots(1, num_metrics, figsize=(15, 5))
         plt.suptitle(f"Minmized loss : {minimized_loss}")
         for iax, ax in enumerate(axes):
@@ -73,8 +83,12 @@ def main():
                 continue
             # Plot all the losses of this run
             for i in range(num_metrics):
+                scale = get_scale(minimized_loss, loss_plot[i])
+                print(
+                    f"For minimized {minimized_loss}, lossname {loss_plot[i]}, scale={scale}"
+                )
                 axes[i].plot(
-                    dico[loss_plot[i]]["value"],
+                    scale * dico[loss_plot[i]]["value"],
                     color=colors[dico["algorithm"]],
                     label=dico["algorithm"],
                 )
@@ -83,7 +97,7 @@ def main():
         handles, labels = axes[-1].get_legend_handles_labels()
         fig.legend(handles, labels, loc="lower center")
         plt.tight_layout()
-        plt.savefig(f"celeba_{minimized_loss}.pdf")
+        plt.savefig(f"sar_{minimized_loss}.pdf")
         plt.close(fig)
 
 
