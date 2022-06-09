@@ -1,0 +1,38 @@
+DATASET:
+  NAME: SAR #  SAR or CelebA
+  FAKE_HIGH: True
+  DRY_RUN: False
+  CLIP:
+    MIN: -200
+    MAX: 0
+  IMAGE_SIZE: 512
+  NUM_THREADS: 4
+INFERENCE:
+  PATH_TO_MODEL: '../trained_models/pixelshuffle-5575/best_model.pth'
+  PATH_TO_IMAGES: '../data/data_files/test/low_resolution'
+  PATH_TO_SAVE: './output'
+  # MAXIFILE : '../data/data_files/test/low_resolution/dataset_maximum.npy'
+  MAXIFILE : 54.18165588378906
+  BATCH_SIZE: 1
+TRAIN:
+    LOSS:
+        NAME: "SSIM"  # For specific scaling depending on the train conditions
+
+MODEL:
+  NAME: "PixelShuffle"
+  SRCNN:
+    BASE_CHANNELS: 64
+  SRCNN2:
+    BASE_CHANNELS: 32
+    DEPTH: 3
+  SWINTRANSFORMER:
+    IN_CHANNELS: 1
+    WINDOW_SIZE: 8
+    IMG_SIZE: 64
+    IMG_RANGE: 1
+    DEPTHS : [6, 6, 6, 6]
+    EMBED_DIM: 60
+    NUM_HEADS: [6, 6, 6, 6]
+    MLP_RATIO: 2
+    UPSAMPLER: "pixelshuffledirect"
+    RESI_CONNECTION: "1conv"
