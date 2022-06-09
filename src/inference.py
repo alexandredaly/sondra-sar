@@ -54,7 +54,7 @@ def main(cfg):
             print(filepath)
             filepath = pathlib.Path(filepath)
             output = output.cpu().detach().numpy()
-            np.save(path_to_save / filepath.name, output)
+            np.save(path_to_save / filepath.name, output.squeeze())
 
 
 if __name__ == "__main__":
