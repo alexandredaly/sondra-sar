@@ -92,6 +92,12 @@ def get_model(cfg, pretrained=False):
         return SRCNN.SRCNN2(cfg["MODEL"]["SRCNN2"])
     elif cfg["MODEL"]["NAME"] == "PixelShuffle":
         return PixelShuffle()
+    elif cfg["MODEL"]["NAME"] == "Nearest":
+        return torch.nn.Upsample(scale_factor=2, mode="nearest")
+    elif cfg["MODEL"]["NAME"] == "Bilinear":
+        return torch.nn.Upsample(scale_factor=2, mode="bilinear")
+    elif cfg["MODEL"]["NAME"] == "Bicubic":
+        return torch.nn.Upsample(scale_factor=2, mode="bicubic")
     else:
         return None
 
