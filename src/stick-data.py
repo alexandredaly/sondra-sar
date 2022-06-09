@@ -52,7 +52,7 @@ def main(args):
                 irng * datashape[1] : ((irng + 1) * datashape[1]),
             ] = to_db(data[...])
     plt.figure()
-    plt.imshow(equalize(fulldata.T)[0], cmap=plt.cm.gray)
+    plt.imshow(equalize(fulldata)[0], cmap=plt.cm.gray)
     plt.axis("off")
     plt.savefig("stick.png", bbox_inches="tight", dpi=1200)
 
