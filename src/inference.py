@@ -32,8 +32,9 @@ def main(cfg):
     model = model.to(device)
 
     # Load model parameters
-    load_network(cfg["INFERENCE"]["PATH_TO_MODEL"], model, strict=True)
-    print("\n Model has been load !")
+    if cfg["MODEL"]["NAME"] not in ["Nearest", "Bilinear", "Bicubic"]:
+        load_network(cfg["INFERENCE"]["PATH_TO_MODEL"], model, strict=True)
+        print("\n Model has been load !")
 
     # Init directory to save images if not created
     path_to_save = pathlib.Path(cfg["INFERENCE"]["PATH_TO_SAVE"])
