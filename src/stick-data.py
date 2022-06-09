@@ -28,7 +28,7 @@ def main(args):
         if basename is None:
             basename = "_".join(fields[:-2])
         if datashape is None:
-            datashape = np.load(f).shape
+            datashape = np.load(f).squeeze().shape
     # organize them
     azimuth_values = sorted(list(azimuth_values))
     range_values = sorted(list(range_values))
@@ -46,7 +46,7 @@ def main(args):
             filename = args.datadir / pathlib.Path(f"{basename}_{azi}_{rng}.npy")
             if not filename.exists():
                 print(f"{filename} does not exist")
-            data = np.load(filename)
+            data = np.load(filename).squeeze()
             fulldata[
                 iazi * datashape[0] : ((iazi + 1) * datashape[0]),
                 irng * datashape[1] : ((irng + 1) * datashape[1]),
